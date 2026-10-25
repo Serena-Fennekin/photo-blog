@@ -1,7 +1,9 @@
 <template>
   <div class="site-shell">
-    <main>
+    <SiteHeader />
+    <main id="main-content">
       <slot />
     </main>
+    <SiteFooter />
   </div>
 </template>
