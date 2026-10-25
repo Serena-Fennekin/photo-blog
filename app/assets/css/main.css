@@ -1,0 +1,50 @@
+:root {
+  color-scheme: dark;
+  --color-bg: #14201c;
+  --color-surface: #1b2a25;
+  --color-text: #f0eee7;
+  --color-muted: #a8b2aa;
+  --color-accent: #d38a5a;
+  font-family: Inter, "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.site-shell {
+  min-height: 100vh;
+}
+
+.app-placeholder {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.eyebrow {
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  margin: 0.5rem 0 0;
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: clamp(2rem, 7vw, 5rem);
+  font-weight: 400;
+}
