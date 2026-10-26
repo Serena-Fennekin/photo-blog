@@ -2,6 +2,7 @@
 
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 
 import ThemeSelector from '../../app/components/site/ThemeSelector.vue'
 
@@ -25,6 +26,7 @@ describe('ThemeSelector', () => {
     })))
 
     const wrapper = mount(ThemeSelector, { attachTo: document.body })
+    await nextTick()
     const labels = wrapper.get('[aria-label="颜色主题"]').findAll('button').map(button => button.text())
 
     expect(labels).toEqual(['跟随系统', '深色', '浅色'])

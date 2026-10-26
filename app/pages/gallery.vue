@@ -6,6 +6,7 @@ const route = useRoute()
 const lightbox = usePhotoLightbox()
 const lightboxOpen = lightbox.isOpen
 const lightboxContext = lightbox.context
+const lightboxOriginScrollY = lightbox.originScrollY
 const galleryReady = ref(false)
 const activeCategory = computed(() => typeof route.query.category === 'string' ? route.query.category : undefined)
 const requestKey = computed(() => `gallery:${activeCategory.value ?? 'all'}`)
@@ -82,6 +83,7 @@ useSeoMeta({
     <GalleryPhotoLightbox
       :open="lightboxOpen"
       :context="lightboxContext"
+      :origin-scroll-y="lightboxOriginScrollY"
       @close="lightbox.closePhoto"
       @navigate="lightbox.navigatePhoto"
     />

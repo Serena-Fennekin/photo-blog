@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
 import { themePreferences, useThemePreference, type ThemePreference } from '~/composables/useThemePreference'
 
 const labels: Record<ThemePreference, string> = {
@@ -8,6 +10,11 @@ const labels: Record<ThemePreference, string> = {
 }
 
 const { preference, setPreference } = useThemePreference()
+const interactive = ref(false)
+
+onMounted(() => {
+  interactive.value = true
+})
 </script>
 
 <template>
@@ -17,6 +24,7 @@ const { preference, setPreference } = useThemePreference()
       :key="choice"
       class="theme-selector__choice"
       type="button"
+      :disabled="!interactive"
       :data-theme-choice="choice"
       :aria-pressed="preference === choice"
       @click="setPreference(choice)"

@@ -6,7 +6,8 @@ import ExifPanel from './ExifPanel.vue'
 
 const props = defineProps({
   open: { type: Boolean, required: true },
-  context: { type: Object as PropType<PhotoContext | null>, default: null }
+  context: { type: Object as PropType<PhotoContext | null>, default: null },
+  originScrollY: { type: Number as PropType<number | null>, default: null }
 })
 const emit = defineEmits<{ close: []; navigate: [photoId: string] }>()
 
@@ -14,6 +15,10 @@ const dialog = ref<HTMLElement | null>(null)
 const closeButton = ref<HTMLButtonElement | null>(null)
 let previousFocus: HTMLElement | null = null
 let previousOverflow = ''
+let previousPosition = ''
+let previousTop = ''
+let previousWidth = ''
+let previousScrollY = 0
 let stopOpenWatch: (() => void) | undefined
 
 const previousId = computed(() => {
@@ -82,7 +87,14 @@ const onKeydown = (event: KeyboardEvent) => {
 const activate = async () => {
   previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
   previousOverflow = document.body.style.overflow
+  previousPosition = document.body.style.position
+  previousTop = document.body.style.top
+  previousWidth = document.body.style.width
+  previousScrollY = props.originScrollY ?? window.scrollY
   document.body.style.overflow = 'hidden'
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${previousScrollY}px`
+  document.body.style.width = '100%'
   window.addEventListener('keydown', onKeydown)
   await nextTick()
   closeButton.value?.focus()
@@ -92,7 +104,11 @@ const activate = async () => {
 const deactivate = () => {
   window.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = previousOverflow
-  previousFocus?.focus()
+  document.body.style.position = previousPosition
+  document.body.style.top = previousTop
+  document.body.style.width = previousWidth
+  window.scrollTo(0, previousScrollY)
+  previousFocus?.focus({ preventScroll: true })
   previousFocus = null
 }
 

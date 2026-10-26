@@ -14,6 +14,7 @@ const photoUrl = (photoId?: string) => {
 export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
   const context = shallowRef<PhotoContext | null>(null)
   const loading = shallowRef(false)
+  const originScrollY = shallowRef<number | null>(null)
   const fetchPhoto = fetchContext ?? ((photoId: string) => $fetch<PhotoContext>(`/api/public/photos/${photoId}`))
 
   const load = async (photoId: string) => {
@@ -26,6 +27,7 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
   }
 
   const openPhoto = async (photoId: string) => {
+    if (import.meta.client) originScrollY.value = window.scrollY
     await load(photoId)
     if (import.meta.client) history.pushState({ photoId }, '', photoUrl(photoId))
   }
@@ -37,6 +39,7 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
 
   const closePhoto = () => {
     context.value = null
+    originScrollY.value = null
     if (!import.meta.client) return
     if (history.state?.photoId) history.back()
     else history.replaceState({}, '', photoUrl())
@@ -57,7 +60,10 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
   const onPopState = () => {
     const photoId = new URL(window.location.href).searchParams.get('photo')
     if (photoId) void load(photoId)
-    else context.value = null
+    else {
+      context.value = null
+      originScrollY.value = null
+    }
   }
 
   onMounted(() => {
@@ -71,6 +77,7 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
   return {
     context,
     loading,
+    originScrollY,
     isOpen: computed(() => context.value !== null),
     openPhoto,
     closePhoto,

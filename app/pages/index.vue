@@ -2,6 +2,8 @@
 import type { HomePageModel } from '../../server/services/public-content-service'
 
 const { data: home } = await useAsyncData('home-page', () => $fetch<HomePageModel>('/api/public/home'))
+const homeRoot = ref<HTMLElement | null>(null)
+useHomeAnimations(homeRoot)
 
 if (!home.value?.settings.heroPhoto) {
   throw createError({ statusCode: 503, statusMessage: '首页照片暂不可用' })
@@ -14,14 +16,18 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="home" class="home-page">
-    <HomeHero :photo="home.settings.heroPhoto!" />
+  <div v-if="home" ref="homeRoot" class="home-page" data-home-motion-root>
+    <div data-home-motion="hero">
+      <HomeHero :photo="home.settings.heroPhoto!" />
+    </div>
 
     <section class="home-page__chapters" aria-label="最近摄影记录">
-      <TimeChapter v-for="story in home.stories" :key="story.id" :story="story" />
+      <div v-for="story in home.stories" :key="story.id" data-home-motion="chapter">
+        <HomeTimeChapter :story="story" />
+      </div>
     </section>
 
-    <GalleryInvitation />
+    <HomeGalleryInvitation />
 
     <section class="home-about">
       <p class="eyebrow">BEHIND THE CAMERA</p>

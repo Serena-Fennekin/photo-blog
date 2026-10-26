@@ -10,6 +10,6 @@
       <NuxtLink to="/about">关于我</NuxtLink>
     </nav>
 
-    <ThemeSelector />
+    <SiteThemeSelector />
   </header>
 </template>

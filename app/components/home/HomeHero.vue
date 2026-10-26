@@ -6,13 +6,13 @@ defineProps<{ photo: GalleryPhoto }>()
 
 <template>
   <section class="home-hero" aria-labelledby="hero-title">
-    <div class="home-hero__copy">
+    <div class="home-hero__copy" data-home-motion="hero-copy">
       <p class="eyebrow">PHOTOGRAPHIC JOURNAL · HANGZHOU</p>
       <h1 id="hero-title">日常，经过光之后</h1>
       <p class="home-hero__lede">记录在城市与山野之间，偶然停留的目光。</p>
     </div>
 
-    <figure class="home-hero__frame">
+    <figure class="home-hero__frame" data-home-motion="hero-image">
       <img
         :src="photo.image.src"
         :srcset="photo.image.srcset"

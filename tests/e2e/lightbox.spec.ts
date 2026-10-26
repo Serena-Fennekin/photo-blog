@@ -5,7 +5,8 @@ test('opens from a deep gallery position and restores focus and scroll', async (
   page.on('pageerror', error => pageErrors.push(error.message))
   await page.goto('/gallery')
   const card = page.locator('[data-photo-id="river-1"]')
-  await card.scrollIntoViewIfNeeded()
+  await card.evaluate(element => element.scrollIntoView({ block: 'center' }))
+  await expect(card).toBeInViewport({ ratio: 0.8 })
   const before = await page.evaluate(() => window.scrollY)
 
   const detailResponse = page.waitForResponse(response => response.url().includes('/api/public/photos/river-1'))
@@ -16,6 +17,7 @@ test('opens from a deep gallery position and restores focus and scroll', async (
   const dialog = page.getByRole('dialog', { name: '照片详情' })
   await expect(dialog).toBeVisible()
   await expect(page.locator('body')).toHaveCSS('overflow', 'hidden')
+  expect(Number.parseFloat(await page.locator('body').evaluate(body => body.style.top))).toBeCloseTo(-before, 0)
   await expect(dialog.getByText('SONY ILCE-7M4')).toBeVisible()
 
   await page.keyboard.press('Escape')
