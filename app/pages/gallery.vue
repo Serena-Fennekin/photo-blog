@@ -3,6 +3,10 @@ import type { GalleryPage } from '~/types/content'
 import { mergeGalleryItems } from '~/utils/gallery'
 
 const route = useRoute()
+const lightbox = usePhotoLightbox()
+const lightboxOpen = lightbox.isOpen
+const lightboxContext = lightbox.context
+const galleryReady = ref(false)
 const activeCategory = computed(() => typeof route.query.category === 'string' ? route.query.category : undefined)
 const requestKey = computed(() => `gallery:${activeCategory.value ?? 'all'}`)
 
@@ -21,6 +25,10 @@ const loadingMore = ref(false)
 watch(data, (page) => {
   items.value = page?.items ?? []
   nextCursor.value = page?.nextCursor ?? null
+})
+
+onMounted(() => {
+  galleryReady.value = true
 })
 
 const loadMore = async () => {
@@ -57,18 +65,25 @@ useSeoMeta({
       <p>照片从不同记录中汇在这里。选择一个主题，或只是向下慢慢观看。</p>
     </header>
 
-    <CategoryFilter
+    <GalleryCategoryFilter
       :categories="data?.categories ?? []"
       :active-category="activeCategory"
     />
 
     <p v-if="pending && !items.length" class="gallery-loading" role="status">正在显影…</p>
-    <GalleryGrid v-else :items="items" />
+    <GalleryGrid v-else :items="items" :interactive="galleryReady" @select="lightbox.openPhoto" />
 
     <div v-if="nextCursor" class="gallery-more">
       <button type="button" :disabled="loadingMore" @click="loadMore">
         {{ loadingMore ? '正在加载…' : '加载更多' }}
       </button>
     </div>
+
+    <GalleryPhotoLightbox
+      :open="lightboxOpen"
+      :context="lightboxContext"
+      @close="lightbox.closePhoto"
+      @navigate="lightbox.navigatePhoto"
+    />
   </div>
 </template>

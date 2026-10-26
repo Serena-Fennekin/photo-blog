@@ -3,7 +3,9 @@ import GalleryCard from './GalleryCard.vue'
 
 import type { GalleryPhoto } from '~/types/content'
 
-defineProps<{ items: GalleryPhoto[] }>()
+withDefaults(defineProps<{ items: GalleryPhoto[]; interactive?: boolean }>(), {
+  interactive: true
+})
 const emit = defineEmits<{ select: [photoId: string] }>()
 </script>
 
@@ -13,6 +15,7 @@ const emit = defineEmits<{ select: [photoId: string] }>()
       v-for="photo in items"
       :key="photo.id"
       :photo="photo"
+      :interactive="interactive"
       @select="emit('select', $event)"
     />
   </div>

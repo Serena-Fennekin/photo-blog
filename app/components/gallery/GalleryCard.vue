@@ -4,7 +4,9 @@ import { computed } from 'vue'
 import type { GalleryPhoto } from '~/types/content'
 import { gridSrcset } from '~/utils/gallery'
 
-const props = defineProps<{ photo: GalleryPhoto }>()
+const props = withDefaults(defineProps<{ photo: GalleryPhoto; interactive?: boolean }>(), {
+  interactive: true
+})
 const emit = defineEmits<{ select: [photoId: string] }>()
 const cardRatio = computed(() => `${props.photo.image.width} / ${props.photo.image.height}`)
 const cardSrcset = computed(() => gridSrcset(props.photo.image.srcset))
@@ -14,6 +16,7 @@ const cardSrcset = computed(() => gridSrcset(props.photo.image.srcset))
   <button
     class="gallery-card"
     type="button"
+    :disabled="!interactive"
     :data-photo-id="photo.id"
     :style="{ aspectRatio: cardRatio }"
     :aria-label="`查看照片：${photo.image.alt}`"
