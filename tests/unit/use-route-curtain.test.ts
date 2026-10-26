@@ -5,7 +5,7 @@ import {
   isCurtainTarget
 } from '../../app/composables/useRouteCurtain'
 
-type RouteHook = (to: { path: string }) => void | Promise<void>
+type RouteHook = (to: { path: string }, from: { path: string }) => void | Promise<void>
 
 const deferred = () => {
   let resolve!: () => void
@@ -32,8 +32,8 @@ const createRouter = () => {
         return removeAfter
       })
     },
-    before: (path: string) => beforeHook({ path }),
-    after: (path: string) => afterHook({ path }),
+    before: (path: string, fromPath = '/') => beforeHook({ path }, { path: fromPath }),
+    after: (path: string, fromPath = '/') => afterHook({ path }, { path: fromPath }),
     removeBefore,
     removeAfter
   }
@@ -122,5 +122,21 @@ describe('createRouteCurtainController', () => {
     controller.dispose()
     expect(fake.removeBefore).toHaveBeenCalledOnce()
     expect(fake.removeAfter).toHaveBeenCalledOnce()
+  })
+
+  it('does not animate query-only navigation within a curtain target page', async () => {
+    const fake = createRouter()
+    const wait = vi.fn(() => Promise.resolve())
+    const controller = createRouteCurtainController(fake.router, {
+      nextFrame: () => Promise.resolve(),
+      wait,
+      reducedMotion: () => false
+    })
+
+    await fake.before('/gallery', '/gallery')
+    await fake.after('/gallery', '/gallery')
+
+    expect(controller.phase.value).toBe('idle')
+    expect(wait).not.toHaveBeenCalled()
   })
 })

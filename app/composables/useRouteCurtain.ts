@@ -3,7 +3,7 @@ import { onScopeDispose, readonly, ref, type Ref } from 'vue'
 export type CurtainPhase = 'idle' | 'preparing' | 'covering' | 'covered' | 'revealing'
 
 type CurtainRoute = { path: string }
-type CurtainHook = (to: CurtainRoute) => void | Promise<void>
+type CurtainHook = (to: CurtainRoute, from: CurtainRoute) => void | Promise<void>
 
 interface CurtainRouter {
   beforeEach: (hook: CurtainHook) => () => void
@@ -53,8 +53,8 @@ export const createRouteCurtainController = (
     state.value = 'idle'
   }
 
-  const removeBefore = router.beforeEach(async (to) => {
-    if (!isCurtainTarget(to.path) || timing.reducedMotion()) return
+  const removeBefore = router.beforeEach(async (to, from) => {
+    if (!isCurtainTarget(to.path) || to.path === from.path || timing.reducedMotion()) return
 
     if (revealPromise) await revealPromise
     if (disposed) return

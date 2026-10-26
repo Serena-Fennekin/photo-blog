@@ -5,6 +5,7 @@ test('opens from a deep gallery position and restores focus and scroll', async (
   page.on('pageerror', error => pageErrors.push(error.message))
   await page.goto('/gallery')
   const card = page.locator('[data-photo-id="river-1"]')
+  await expect(card).toBeEnabled()
   await card.evaluate(element => element.scrollIntoView({ block: 'center' }))
   await expect(card).toBeInViewport({ ratio: 0.8 })
   await card.evaluate(element => element.addEventListener('click', () => {
