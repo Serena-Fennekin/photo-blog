@@ -12,7 +12,7 @@ The result should feel like turning through a photographic journal. Motion shoul
 - Reveal photographs with a short clip/scale/brightness transition, with captions arriving after the image.
 - Sequence each section so label/date, title, image, note, and link do not enter simultaneously.
 - Add gentle scroll-linked image parallax after the entrance animation, keeping the page's native scrolling behavior.
-- Give desktop wheel and trackpad input a damped, slow catch-up motion so scrolling and section choreography feel like one continuous gesture.
+- Give desktop wheel and trackpad input a damped, slow catch-up motion across every public route so navigation never changes the site's physical feel.
 - Preserve the existing desktop and mobile layouts, all three theme modes, sticky navigation, and route curtain.
 - Preserve accessible static content when the operating system requests reduced motion.
 
@@ -35,7 +35,7 @@ Alternatives considered:
 
 For inertial scrolling, the selected implementation is **Lenis**:
 
-1. **Lenis (selected):** adds real damping while preserving the existing fixed header, sticky gallery filters, and route-curtain structure.
+1. **Lenis (selected):** adds real damping across the public site while preserving the existing fixed header, sticky gallery filters, and route-curtain structure.
 2. **GSAP ScrollSmoother:** avoids a new dependency but requires a transformed wrapper and special treatment for fixed/sticky UI; rejected because this site already relies on both.
 3. **Animation-only scrub:** softens parallax but does not change the physical scroll response; rejected because it does not provide the requested resistance.
 
@@ -76,10 +76,12 @@ For inertial scrolling, the selected implementation is **Lenis**:
 - Delays are created by timeline overlap, not by making the section wait off-screen.
 - `power3.out` is the default reveal easing; image parallax uses a scrub value around `0.6–0.8` for a softened response.
 - Native page scrolling remains in control. Existing CSS smooth scrolling may continue for anchor navigation only.
-- The homepage initializes Lenis for desktop wheel/trackpad input with an initial `lerp` near `0.075` and a wheel multiplier near `0.85`. Browser QA may tune these values within a narrow range so the catch-up feels slow without exceeding roughly one second.
+- The public site shell initializes Lenis for desktop wheel/trackpad input with an initial `lerp` near `0.075` and a wheel multiplier near `0.85`. Browser QA may tune these values within a narrow range so the catch-up feels slow without exceeding roughly one second.
 - Lenis and ScrollTrigger share GSAP's ticker. A Lenis scroll event updates ScrollTrigger, avoiding two competing animation loops.
 - Touch dragging stays native (`syncTouch: false`); the reveal choreography remains enabled with shorter distances.
-- Lenis is scoped to the homepage and destroyed when leaving it. Gallery, story, about, lightbox, and admin scrolling remain unchanged.
+- Lenis persists through public route navigation so the homepage, gallery, about page, and story pages share one consistent scroll response.
+- Opening the photo lightbox stops Lenis before body scroll is locked; closing the lightbox restarts it without changing the restored page position.
+- Route navigation and browser history continue to use Nuxt's scroll restoration. Lenis synchronizes to the resulting native position rather than maintaining a separate route history.
 - `prefers-reduced-motion: reduce` skips GSAP setup and leaves every element fully visible with no clip, transform, filter, or opacity dependency.
 - `prefers-reduced-motion: reduce` also skips Lenis, preserving immediate native scrolling.
 
@@ -87,7 +89,7 @@ For inertial scrolling, the selected implementation is **Lenis**:
 
 - Extend the existing `data-home-motion` markers in `HomeHero.vue`, `TimeChapter.vue`, `GalleryInvitation.vue`, and the homepage about block.
 - Add reusable mask/reveal styling to `app/assets/css/main.css`; do not add another animation library.
-- Add the maintained `lenis` package and its base CSS. Create a small homepage-scoped composable that owns Lenis initialization, GSAP ticker synchronization, and cleanup.
+- Add the maintained `lenis` package and its base CSS. Create a client-only site-shell composable/plugin that owns Lenis initialization, GSAP ticker synchronization, route refresh, pause/resume, and cleanup.
 - Refactor `useHomeAnimations.ts` into small choreography helpers inside the same module, while retaining scoped GSAP context cleanup.
 - Continue dynamically importing GSAP and ScrollTrigger only on clients that allow motion.
 - Dynamically import Lenis on the client only when motion is allowed; do not add it to the server-rendered path.
@@ -96,7 +98,7 @@ For inertial scrolling, the selected implementation is **Lenis**:
 ## Verification
 
 - Unit tests verify reduced-motion bypass, scoped cleanup, once-only entrance timelines, and separate scrubbed parallax triggers.
-- Unit tests verify Lenis receives the selected damping options, shares the GSAP ticker, updates ScrollTrigger, and is destroyed on homepage unmount.
+- Unit tests verify Lenis receives the selected damping options, shares the GSAP ticker, updates ScrollTrigger, survives public route navigation, pauses for the lightbox, and is destroyed with the site shell.
 - Component tests verify the reveal markup does not alter readable text or link semantics.
 - End-to-end checks cover desktop and mobile scrolling, light/dark/system themes, and route-curtain navigation after animation.
 - Browser QA captures the hero, a chapter entering, the invitation, and reduced-motion mode to check for clipping, layout shifts, image flashes, and stale transforms after navigation.
@@ -106,5 +108,5 @@ For inertial scrolling, the selected implementation is **Lenis**:
 - Preserve the current palette, typography, and layout tokens; this is a motion redesign rather than a visual rebrand.
 - Use CSS overflow/clip wrappers plus GSAP transforms instead of GSAP SplitText, avoiding a new dependency and unpredictable dynamic line splitting.
 - Retain all motion on mobile but shorten travel distance and parallax range to avoid exposing empty image edges.
-- Apply inertial scrolling only to the homepage's desktop wheel/trackpad path. This keeps touch gestures direct and prevents the global shell or lightbox from inheriting scroll state.
+- Apply inertial scrolling to the entire public site's desktop wheel/trackpad path, including homepage, gallery, about, and story routes. Touch remains direct, while the lightbox explicitly pauses and resumes the shared scroller.
 
