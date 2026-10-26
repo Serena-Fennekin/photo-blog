@@ -29,10 +29,10 @@ useSeoMeta({
 
     <HomeGalleryInvitation />
 
-    <section class="home-about">
-      <p class="eyebrow">BEHIND THE CAMERA</p>
-      <p>拍照是我与时间相处的方式。这里没有宏大的主题，只有反复经过的街道、天气与人。</p>
-      <NuxtLink class="text-link" to="/about">了解更多 ↗</NuxtLink>
+    <section class="home-about" data-home-motion="home-about">
+      <p class="eyebrow" data-home-motion="home-about-label">BEHIND THE CAMERA</p>
+      <p data-home-motion="home-about-copy">拍照是我与时间相处的方式。这里没有宏大的主题，只有反复经过的街道、天气与人。</p>
+      <NuxtLink class="text-link" to="/about" data-home-motion="home-about-link">了解更多 ↗</NuxtLink>
     </section>
   </div>
 </template>

@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test'
 test('browses the public journal across themes, gallery filters, stories, and about', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
+  await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
+  await expect(page.locator('[data-home-motion="chapter-date"]')).toHaveCount(2)
 
   for (const [name, theme] of [['深色', 'dark'], ['浅色', 'light'], ['跟随系统', 'system']] as const) {
     await page.getByRole('button', { name }).click()

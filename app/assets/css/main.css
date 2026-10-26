@@ -23,6 +23,10 @@
   --header-bg: rgba(20, 32, 28, 0.84);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 * {
   box-sizing: border-box;
 }

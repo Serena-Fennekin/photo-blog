@@ -11,10 +11,10 @@ const displayDate = computed(() => props.story.capturedOn.replaceAll('-', '.'))
   <article class="time-chapter">
     <header class="time-chapter__header">
       <div>
-        <p class="time-chapter__date">{{ displayDate }}</p>
+        <p class="time-chapter__date" data-home-motion="chapter-date">{{ displayDate }}</p>
         <p v-if="story.location" class="time-chapter__location">{{ story.location }}</p>
       </div>
-      <div class="time-chapter__copy">
+      <div class="time-chapter__copy" data-home-motion="chapter-copy">
         <p class="eyebrow">A PHOTOGRAPHIC NOTE</p>
         <h2>{{ story.title }}</h2>
         <p v-if="story.note" class="time-chapter__note">{{ story.note }}</p>
@@ -23,7 +23,12 @@ const displayDate = computed(() => props.story.capturedOn.replaceAll('-', '.'))
     </header>
 
     <div class="time-chapter__photos">
-      <figure v-for="(photo, index) in story.previewPhotos" :key="photo.id" :class="{ 'is-secondary': index > 0 }">
+      <figure
+        v-for="(photo, index) in story.previewPhotos"
+        :key="photo.id"
+        :class="{ 'is-secondary': index > 0 }"
+        :data-home-motion="index === 0 ? 'chapter-primary-photo' : 'chapter-secondary-photo'"
+      >
         <img
           :src="photo.image.src"
           :srcset="photo.image.srcset"
