@@ -5,6 +5,8 @@ test('browses the public journal across themes, gallery filters, stories, and ab
   await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
   await expect(page.locator('[data-home-motion="chapter-date"]')).toHaveCount(2)
+  const curtain = page.locator('[data-route-curtain]')
+  await expect(curtain).toHaveAttribute('data-state', 'idle')
 
   for (const [name, theme] of [['深色', 'dark'], ['浅色', 'light'], ['跟随系统', 'system']] as const) {
     await page.getByRole('button', { name }).click()
@@ -12,7 +14,12 @@ test('browses the public journal across themes, gallery filters, stories, and ab
     if (theme !== 'system') await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
   }
 
-  await page.getByRole('link', { name: /进入摄影集/ }).click()
+  const galleryNavigation = page.getByRole('link', { name: /进入摄影集/ }).click()
+  await expect(curtain).not.toHaveAttribute('data-state', 'idle')
+  await galleryNavigation
+  await expect(page).toHaveURL(/\/gallery$/)
+  await expect(page.getByRole('heading', { name: '摄影集', level: 1 })).toBeVisible()
+  await expect(curtain).toHaveAttribute('data-state', 'idle')
   await page.getByRole('link', { name: '自然' }).click()
   await expect(page).toHaveURL(/category=nature/)
   await expect(page.locator('[data-photo-id^="winter-"]')).toHaveCount(3)
@@ -21,6 +28,7 @@ test('browses the public journal across themes, gallery filters, stories, and ab
   await page.goto('/')
   await page.getByRole('link', { name: /翻阅这组记录/ }).first().click()
   await expect(page.getByRole('heading', { name: '冬日侧光', level: 1 })).toBeVisible()
+  await expect(curtain).toHaveAttribute('data-state', 'idle')
   await expect(page.locator('[data-story-photo-id]')).toHaveCount(3)
   const imageAlts = await page.locator('main img').evaluateAll(images => images.map(image => image.getAttribute('alt')))
   expect(imageAlts.every(alt => alt !== null)).toBe(true)
@@ -29,8 +37,11 @@ test('browses the public journal across themes, gallery filters, stories, and ab
   await page.getByRole('button', { name: /关闭/ }).click()
   await expect(page.getByRole('dialog', { name: '照片详情' })).toBeHidden()
 
-  await page.getByRole('link', { name: '关于我' }).click()
+  const aboutNavigation = page.getByRole('link', { name: '关于我' }).click()
+  await expect(curtain).not.toHaveAttribute('data-state', 'idle')
+  await aboutNavigation
   await expect(page.getByRole('heading', { name: '关于我', level: 1 })).toBeVisible()
+  await expect(curtain).toHaveAttribute('data-state', 'idle')
 })
 
 test('keeps all homepage content visible with reduced motion', async ({ page }) => {
