@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { routeFixtureImages } from './helpers/fixture-images'
 
 test.beforeEach(async ({ page }) => {
+  await routeFixtureImages(page)
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
 })
@@ -11,7 +13,7 @@ test('browses the public journal across themes, gallery filters, photo links, an
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
-  await expect(page.locator('[data-home-motion="chapter-date"]')).toHaveCount(2)
+  await expect(page.locator('[data-home-motion="chapter-date"]')).toHaveCount(5)
   const curtain = page.locator('[data-route-curtain]')
   await expect(curtain).toHaveAttribute('data-state', 'idle')
 
@@ -53,8 +55,8 @@ test('browses the public journal across themes, gallery filters, photo links, an
 
 test('opens legacy record bookmarks in the gallery', async ({ page }) => {
   await page.goto('/stories/winter-light')
-  await expect(page).toHaveURL(/\/gallery\?photo=winter-1/)
-  await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
+  await expect(page).toHaveURL(/\/gallery$/)
+  await expect(page.getByRole('heading', { name: '摄影集', level: 1 })).toBeVisible()
 })
 
 test('keeps all homepage content visible with reduced motion', async ({ page }) => {
@@ -63,6 +65,36 @@ test('keeps all homepage content visible with reduced motion', async ({ page }) 
 
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'static')
   await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '冬日侧光' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '山风越过枯草。' })).toBeVisible()
   await expect(page.getByRole('link', { name: /进入摄影集/ })).toBeVisible()
+})
+
+test('keeps the enlarged navigation and category labels readable on the viewport', async ({ page }) => {
+  await page.goto('/gallery')
+  const navigation = page.getByRole('navigation', { name: '主导航' })
+  for (const name of ['首页', '摄影集', '关于我']) {
+    const link = navigation.getByRole('link', { name, exact: true })
+    await expect(link).toHaveCSS('font-size', '20px')
+    await expect(link).toBeInViewport()
+  }
+  await expect(page.locator('[data-category="nature"]')).toHaveCSS('font-size', '18px')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('wraps long independent photo metadata instead of clipping it', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
+  const moment = page.locator('.photo-moment').first()
+  const widths = await moment.evaluate(element => {
+    return ['h2', '.photo-moment__location', '.photo-moment__note'].map(selector => {
+      const text = element.querySelector<HTMLElement>(selector)!
+      text.textContent = 'W'.repeat(selector === '.photo-moment__note' ? 1500 : 120)
+      return { content: text.scrollWidth, available: text.clientWidth, right: text.getBoundingClientRect().right, viewport: innerWidth }
+    })
+  })
+  for (const width of widths) {
+    expect(width.content, 'valid metadata must wrap inside its text column').toBeLessThanOrEqual(width.available + 1)
+    expect(width.right).toBeLessThanOrEqual(width.viewport + 1)
+  }
 })

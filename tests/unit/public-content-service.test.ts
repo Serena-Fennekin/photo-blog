@@ -20,7 +20,7 @@ describe('getHomePageModel', () => {
     expect(model.settings.heroPhoto?.id).toBe(settings.heroPhoto?.id)
   })
 
-  it('uses the latest published story cover in latest mode', async () => {
+  it('uses the latest published photo in latest mode', async () => {
     const base = createFixtureContentRepository()
     const manualSettings = await base.getPublicSettings()
     const repository = repositoryWith(base, {
@@ -29,21 +29,21 @@ describe('getHomePageModel', () => {
 
     const model = await getHomePageModel(repository)
 
-    expect(model.stories[0]?.slug).toBe('winter-light')
-    expect(model.settings.heroPhoto?.id).toBe(model.stories[0]?.cover.id)
+    expect(model.photos[0]?.id).toBe('winter-1')
+    expect(model.settings.heroPhoto?.id).toBe(model.photos[0]?.id)
   })
 
-  it('keeps the last valid hero when latest mode has no published stories', async () => {
+  it('keeps the last valid hero when latest mode has no published photos', async () => {
     const base = createFixtureContentRepository()
     const manualSettings = await base.getPublicSettings()
     const repository = repositoryWith(base, {
-      listHomeStories: async () => [],
+      listHomePhotos: async () => [],
       getPublicSettings: async () => ({ ...manualSettings, heroMode: 'latest', heroPhoto: null })
     })
 
     const model = await getHomePageModel(repository)
 
-    expect(model.stories).toEqual([])
+    expect(model.photos).toEqual([])
     expect(model.settings.heroPhoto?.id).toBe(manualSettings.lastValidHeroPhoto?.id)
   })
 })

@@ -38,43 +38,59 @@ export default defineEventHandler(async event => {
       if (path[1] === 'me' && method === 'GET') return event.context.admin
       if (path[1] === 'logout' && method === 'POST') { revokeSession(store, getCookie(event, 'journal_admin')); deleteCookie(event, 'journal_admin', { path: '/' }); return { ok: true } }
     }
-    if (path[0] === 'stories') {
+    if (path[0] === 'photos') {
       const id = path[1]
-      if (!id && method === 'GET') return store.listStories()
-      if (!id && method === 'POST') return store.createStory(await readBody(event))
-      if (id && path.length === 2) {
-        if (method === 'GET') { const story = store.getStory(id); if (!story || story.status === 'deleted') throw createError({ statusCode: 404 }); return story }
-        if (method === 'PATCH') return store.updateStory(id, await readBody(event))
-        if (method === 'DELETE') return store.updateStory(id, { status: 'deleted' })
+      if (!id && method === 'GET') return store.listPhotos()
+      if (id === 'bulk' && method === 'POST') {
+        const body = z.object({ ids: z.array(z.string()).min(1).max(1000), changes: z.record(z.string(), z.unknown()) }).strict().parse(await readBody(event))
+        return store.updatePhotos(body.ids, body.changes)
       }
-      if (id && path[2] === 'photos') {
-        if (method === 'DELETE' && path[3]) return store.removePhoto(id, path[3])
-        if (method === 'POST' && (!path[3] || path[4] === 'retry')) {
-          limitRequests(event, 'upload', 100)
-          if (!store.getStory(id)) throw createError({ statusCode: 404 })
-          if (processing) throw createError({ statusCode: 429, statusMessage: '正在处理上一张照片，请稍后重试' })
-          processing = true
-          const photoId = path[3] || randomUUID()
-          try {
-            let data: Buffer, filename = 'photo.jpg'
-            if (path[4] === 'retry') {
-              const photo = store.getStory(id)?.photos.find(photo => photo.id === photoId)
-              if (!photo || photo.originalKey !== `${photoId}.original`) throw new Error('没有可重试的原始文件，请重新选择照片')
-              data = await readFile(join(mediaRoot(), 'private', photo.originalKey))
-            } else {
-              if (Number(getHeader(event, 'content-length')) > 25 * 1024 * 1024) throw createError({ statusCode: 413, statusMessage: '照片最大25MB' })
-              const chunks: Buffer[] = []; let size = 0
-              for await (const chunk of event.node.req) { const part = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk); size += part.length; if (size > 25 * 1024 * 1024) throw createError({ statusCode: 413, statusMessage: '照片最大25MB' }); chunks.push(part) }
-              data = Buffer.concat(chunks)
-              filename = decodeURIComponent(getHeader(event, 'x-file-name') || 'photo.jpg').slice(0, 300)
+      if (id === 'order' && method === 'PUT') {
+        const body = z.object({ ids: z.array(z.string()).max(100000) }).strict().parse(await readBody(event))
+        return store.reorderPhotos(body.ids)
+      }
+      if (id && path.length === 2) {
+        const photo = store.getPhoto(id)
+        if (!photo || photo.status === 'deleted') throw createError({ statusCode: 404 })
+        if (method === 'GET') return photo
+        if (method === 'PATCH') return store.updatePhoto(id, await readBody(event))
+        if (method === 'DELETE') return store.updatePhoto(id, { status: 'deleted' })
+      }
+      if (method === 'POST' && (!id || (path.length === 3 && path[2] === 'retry'))) {
+        limitRequests(event, 'upload', 100)
+        const existing = id ? store.getPhoto(id) : null
+        if (id && (!existing || existing.status === 'deleted')) throw createError({ statusCode: 404 })
+        if (processing) throw createError({ statusCode: 429, statusMessage: '正在处理上一张照片，请稍后重试' })
+        processing = true
+        const photoId = id || randomUUID()
+        let filename = 'photo.jpg'
+        try {
+          let data: Buffer
+          if (existing) {
+            if (existing.originalKey !== photoId + '.original') throw new Error('没有可重试的原始文件，请重新选择照片')
+            data = await readFile(join(mediaRoot(), 'private', existing.originalKey))
+            filename = existing.image?.alt || filename
+          } else {
+            if (Number(getHeader(event, 'content-length')) > 25 * 1024 * 1024) throw createError({ statusCode: 413, statusMessage: '照片最大25MB' })
+            const chunks: Buffer[] = []; let size = 0
+            for await (const chunk of event.node.req) {
+              const part = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+              size += part.length
+              if (size > 25 * 1024 * 1024) throw createError({ statusCode: 413, statusMessage: '照片最大25MB' })
+              chunks.push(part)
             }
-            const photo = await processLocalPhoto(data, photoId, filename)
-            return store.addPhoto(id, photo)
-          } catch (error) {
-            if (!(error && typeof error === 'object' && 'statusCode' in error)) store.addPhoto(id, { id: photoId, status: 'failed', originalKey: `${photoId}.original`, exif: {}, error: '图片处理失败，可重试或重新选择JPEG、PNG、WebP照片' })
-            throw error
-          } finally { processing = false }
-        }
+            data = Buffer.concat(chunks)
+            filename = decodeURIComponent(getHeader(event, 'x-file-name') || filename).slice(0, 300)
+          }
+          const asset = await processLocalPhoto(data, photoId, filename)
+          return existing ? store.replaceAsset(photoId, asset) : store.createPhoto(asset)
+        } catch (error) {
+          if (!existing && !(error && typeof error === 'object' && 'statusCode' in error)) {
+            const failed = store.createPhoto({ id: photoId, processingStatus: 'failed', originalKey: photoId + '.original', exif: {}, error: '图片处理失败，请重试或重新选择JPEG、PNG、WebP照片' })
+            store.updatePhoto(failed.id, { title: filename.replace(/\.[^.]+$/, '').slice(0, 120) })
+          }
+          throw error
+        } finally { processing = false }
       }
     }
     if (path[0] === 'categories') {
@@ -82,7 +98,7 @@ export default defineEventHandler(async event => {
       if (method === 'PUT') return store.saveCategory(await readBody(event))
     }
     if (path[0] === 'settings') {
-      if (method === 'GET') return { ...store.getSettings(), photos: store.publicStories().flatMap(story => story.photos) }
+      if (method === 'GET') return { ...store.getSettings(), photos: store.publicPhotos() }
       if (method === 'PUT') return store.updateSettings(await readBody(event))
     }
     throw createError({ statusCode: 404, statusMessage: '接口不存在' })
@@ -90,6 +106,6 @@ export default defineEventHandler(async event => {
     if (error instanceof ZodError) throw createError({ statusCode: 400, statusMessage: '填写内容格式不正确', data: error.flatten() })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     const message = error instanceof Error ? error.message : '操作失败'
-    throw createError({ statusCode: 400, statusMessage: message.includes('UNIQUE') ? '记录链接或分类名称已存在' : message.slice(0, 180) })
+    throw createError({ statusCode: 400, statusMessage: message.includes('UNIQUE') ? '照片或分类已存在' : message.slice(0, 180) })
   }
 })

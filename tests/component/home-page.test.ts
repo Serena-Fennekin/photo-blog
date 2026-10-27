@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import GalleryInvitation from '../../app/components/home/GalleryInvitation.vue'
 import HomeHero from '../../app/components/home/HomeHero.vue'
-import TimeChapter from '../../app/components/home/TimeChapter.vue'
+import PhotoMoment from '../../app/components/home/PhotoMoment.vue'
 import { createFixtureContentRepository } from '../../server/repositories/fixture-content-repository'
 
 describe('homepage content components', () => {
@@ -28,18 +28,18 @@ describe('homepage content components', () => {
     expect(image.attributes('width')).toBe(String(photo.image.width))
   })
 
-  it('renders a dated chapter with location, note, and preview photos', async () => {
-    const story = (await createFixtureContentRepository().listHomeStories(1))[0]!
+  it('renders one independent photo with its date, location and note', async () => {
+    const photo = (await createFixtureContentRepository().listHomePhotos(1))[0]!
 
-    const wrapper = mount(TimeChapter, {
-      props: { story },
+    const wrapper = mount(PhotoMoment, {
+      props: { photo },
       global: { stubs: { NuxtLink: { template: '<a><slot /></a>' } } }
     })
 
     expect(wrapper.text()).toContain('2025.12.16')
     expect(wrapper.text()).toContain('杭州 · 临安')
-    expect(wrapper.text()).toContain(story.note)
-    expect(wrapper.findAll('img')).toHaveLength(story.previewPhotos.length)
+    expect(wrapper.text()).toContain(photo.note)
+    expect(wrapper.findAll('img')).toHaveLength(1)
   })
 
   it('offers an explicit artistic entrance to the gallery', () => {

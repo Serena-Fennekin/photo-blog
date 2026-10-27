@@ -3,12 +3,12 @@ import { join, resolve } from 'node:path'
 import sharp from 'sharp'
 import exifr from 'exifr'
 import { sanitizeExif } from './exif-policy'
-import type { AdminPhoto } from '../../shared/types/admin'
+import type { PhotoAsset } from '../../shared/types/admin'
 
 sharp.concurrency(1)
 sharp.cache({ memory: 24, files: 10, items: 30 })
 export const mediaRoot = () => resolve(process.env.JOURNAL_MEDIA_DIR || 'storage')
-export async function processLocalPhoto(input: Buffer, id: string, filename: string, root = mediaRoot()): Promise<AdminPhoto> {
+export async function processLocalPhoto(input: Buffer, id: string, filename: string, root = mediaRoot()): Promise<PhotoAsset> {
   if (!/^[a-f0-9-]{36}$/.test(id)) throw new Error('无效照片编号')
   if (!input.length || input.length > 25 * 1024 * 1024) throw new Error('每张照片最大25MB')
   const metadata = await sharp(input, { limitInputPixels: 50000000, animated: false }).metadata()
@@ -25,5 +25,5 @@ export async function processLocalPhoto(input: Buffer, id: string, filename: str
   }
   const exif = await exifr.parse(input, { reviveValues: false, pick: ['Make', 'Model', 'LensModel', 'FocalLength', 'FNumber', 'ISO', 'ExposureTime', 'DateTimeOriginal', 'OffsetTimeOriginal', 'OffsetTime'] }).catch(() => null)
   const rotated = (metadata.orientation ?? 1) >= 5
-  return { id, status: 'ready', originalKey: `${id}.original`, exif: sanitizeExif(exif ?? {}), caption: '', image: { src: `/media/${id}/1280.webp`, srcset: [...new Map(variants.map(value => [value.split(' ').at(-1), value])).values()].join(', '), width: rotated ? metadata.height : metadata.width, height: rotated ? metadata.width : metadata.height, alt: filename.replace(/\.[^.]+$/, '').slice(0, 300) } }
+  return { id, processingStatus: 'ready', originalKey: `${id}.original`, exif: sanitizeExif(exif ?? {}), image: { src: `/media/${id}/1280.webp`, srcset: [...new Map(variants.map(value => [value.split(' ').at(-1), value])).values()].join(', '), width: rotated ? metadata.height : metadata.width, height: rotated ? metadata.width : metadata.height, alt: filename.replace(/\.[^.]+$/, '').slice(0, 300) } }
 }

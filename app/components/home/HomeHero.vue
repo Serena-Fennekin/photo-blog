@@ -26,7 +26,7 @@ defineProps<{ photo: GalleryPhoto | null }>()
       >
       <div v-else class="home-hero__empty">等待下一次快门。</div>
       <figcaption v-if="photo">
-        <span>{{ photo.storyTitle }}</span>
+        <span>{{ photo.title }}</span>
         <span>{{ formatCaptureTime(photo.exif.capturedAt)?.slice(0, 10).replaceAll('-', '.') }}</span>
       </figcaption>
     </figure>

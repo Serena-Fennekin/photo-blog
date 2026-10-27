@@ -19,9 +19,9 @@ useSeoMeta({
       <HomeHero :photo="home.settings.heroPhoto" />
     </div>
 
-    <section class="home-page__chapters" aria-label="最近摄影记录">
-      <div v-for="story in home.stories" :key="story.id" data-home-motion="chapter">
-        <HomeTimeChapter :story="story" />
+    <section class="home-page__chapters" aria-label="最近照片">
+      <div v-for="photo in home.photos" :key="photo.id" data-home-motion="chapter">
+        <HomePhotoMoment :photo="photo" />
       </div>
     </section>
 

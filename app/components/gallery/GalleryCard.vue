@@ -32,7 +32,7 @@ const cardSrcset = computed(() => gridSrcset(props.photo.image.srcset))
       loading="lazy"
     >
     <span class="gallery-card__caption">
-      <span>{{ photo.storyTitle }}</span>
+      <span>{{ photo.title || photo.caption || photo.image.alt }}</span>
       <span>{{ photo.viewCount }} 次查看<span v-if="photo.exif.camera"> · {{ photo.exif.camera }}</span></span>
     </span>
   </button>

@@ -3,6 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-10-25',
   css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
   devtools: { enabled: false },
+  routeRules: { '/stories/**': { redirect: '/gallery' }, '/admin/stories/**': { redirect: '/admin' } },
   vite: { optimizeDeps: { include: ['lenis', 'gsap', 'gsap/ScrollTrigger'] } },
   app: {
     head: {

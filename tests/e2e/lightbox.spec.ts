@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { routeFixtureImages } from './helpers/fixture-images'
+
+test.beforeEach(async ({ page }) => { await routeFixtureImages(page) })
 
 test('opens from a deep gallery position and restores focus and scroll', async ({ page }) => {
   const pageErrors: string[] = []

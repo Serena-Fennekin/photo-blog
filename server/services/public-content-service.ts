@@ -1,23 +1,8 @@
-import type { PublicSettings, StorySummary } from '../../app/types/content'
+import type { GalleryPhoto, PublicSettings } from '../../app/types/content'
 import type { ContentRepository } from '../repositories/content-repository'
-
-export type HomePageModel = {
-  settings: PublicSettings
-  stories: StorySummary[]
-}
-
+export type HomePageModel = { settings: PublicSettings; photos: GalleryPhoto[] }
 export const getHomePageModel = async (repository: ContentRepository): Promise<HomePageModel> => {
-  const [settings, stories] = await Promise.all([
-    repository.getPublicSettings(),
-    repository.listHomeStories(12)
-  ])
-
-  const heroPhoto = settings.heroMode === 'latest'
-    ? stories[0]?.cover ?? settings.lastValidHeroPhoto
-    : settings.heroPhoto ?? settings.lastValidHeroPhoto
-
-  return {
-    settings: { ...settings, heroPhoto },
-    stories
-  }
+  const [settings, photos] = await Promise.all([repository.getPublicSettings(), repository.listHomePhotos(12)])
+  const heroPhoto = settings.heroPhoto ?? (settings.heroMode === 'latest' ? photos[0] : null) ?? settings.lastValidHeroPhoto
+  return { settings: { ...settings, heroPhoto }, photos }
 }

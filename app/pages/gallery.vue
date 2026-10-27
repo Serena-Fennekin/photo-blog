@@ -52,7 +52,7 @@ const loadMore = async () => {
 
 useSeoMeta({
   title: '摄影集 — PHOTO JOURNAL',
-  description: '按主题浏览全部公开摄影记录。'
+  description: '按主题浏览全部公开照片。'
 })
 </script>
 
@@ -63,7 +63,7 @@ useSeoMeta({
         <p class="eyebrow">THE ARCHIVE</p>
         <h1>摄影集</h1>
       </div>
-      <p>照片从不同记录中汇在这里。选择一个主题，或只是向下慢慢观看。</p>
+      <p>每一张照片，都有自己的时间与光线。选择一个主题，或只是向下慢慢观看。</p>
     </header>
 
     <GalleryCategoryFilter

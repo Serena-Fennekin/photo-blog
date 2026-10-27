@@ -189,7 +189,7 @@ onBeforeUnmount(() => {
       <aside class="photo-lightbox__details">
         <div>
           <p class="eyebrow">{{ String(context.index + 1).padStart(2, '0') }} / {{ String(context.siblings.length).padStart(2, '0') }}</p>
-          <h2>{{ context.photo.storyTitle }}</h2>
+          <h2>{{ context.photo.title || context.photo.image.alt || '照片' }}</h2>
           <p v-if="context.photo.caption" class="photo-lightbox__caption">{{ context.photo.caption }}</p>
         </div>
         <ExifPanel :exif="context.photo.exif" />

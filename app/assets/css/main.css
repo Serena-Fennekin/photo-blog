@@ -163,7 +163,7 @@ a:focus-visible {
 .site-nav {
   display: flex;
   gap: clamp(1rem, 2.2vw, 2.25rem);
-  font-size: 0.86rem;
+  font-size: 1.25rem;
 }
 
 .site-nav a {
@@ -294,7 +294,7 @@ h1 {
 }
 
 .home-hero__frame figcaption,
-.time-chapter figcaption {
+.photo-moment figcaption {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -319,12 +319,12 @@ h1 {
   padding: 0 clamp(1rem, 4vw, 4rem);
 }
 
-.time-chapter {
+.photo-moment {
   padding: clamp(5rem, 11vw, 11rem) 0;
   border-top: 1px solid var(--color-line);
 }
 
-.time-chapter__header {
+.photo-moment__header {
   display: grid;
   grid-template-columns: minmax(10rem, 0.55fr) minmax(18rem, 1fr);
   gap: 4rem;
@@ -332,7 +332,7 @@ h1 {
   margin: 0 auto clamp(3rem, 7vw, 7rem);
 }
 
-.time-chapter__date {
+.photo-moment__date {
   margin: 0;
   font-family: Georgia, serif;
   font-size: clamp(2.5rem, 6vw, 6rem);
@@ -340,19 +340,24 @@ h1 {
   line-height: 0.9;
 }
 
-.time-chapter__location {
+.photo-moment__location {
   margin-top: 1.2rem;
   color: var(--color-muted);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
 }
 
-.time-chapter__copy {
+.photo-moment__copy {
   max-width: 38rem;
   padding-top: 0.25rem;
 }
 
-.time-chapter__copy h2,
+.photo-moment__header > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.photo-moment__copy h2,
 .gallery-invitation h2 {
   margin: 0.8rem 0 1.6rem;
   font-family: Georgia, "Noto Serif SC", serif;
@@ -362,7 +367,7 @@ h1 {
   line-height: 1.1;
 }
 
-.time-chapter__note {
+.photo-moment__note {
   max-width: 32rem;
   color: var(--color-muted);
   line-height: 1.9;
@@ -377,28 +382,18 @@ h1 {
   font-size: 0.82rem;
 }
 
-.time-chapter__photos {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(15rem, 0.7fr);
-  align-items: end;
-  gap: clamp(1rem, 3vw, 3rem);
-}
-
-.time-chapter__photos figure {
+.photo-moment__photo {
+  width: min(100%, 72rem);
   margin: 0;
 }
-
-.time-chapter__photos img {
+.photo-moment__photo img {
   display: block;
   width: 100%;
+  height: auto;
   max-height: 78vh;
   background: var(--color-surface);
-  object-fit: cover;
-}
-
-.time-chapter__photos .is-secondary {
-  width: 86%;
-  justify-self: start;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .gallery-invitation {
@@ -511,7 +506,7 @@ h1 {
   border-radius: 999px;
   color: var(--color-muted);
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 1.125rem;
 }
 
 .category-filter a[aria-current="page"] {
@@ -576,8 +571,7 @@ h1 {
   opacity: 1;
 }
 
-.gallery-card:disabled,
-.story-sequence__item button:disabled {
+.gallery-card:disabled {
   cursor: wait;
 }
 
@@ -750,139 +744,6 @@ h1 {
   white-space: nowrap;
 }
 
-.story-page {
-  min-height: 100vh;
-  padding: clamp(3rem, 8vw, 8rem) clamp(1rem, 4vw, 4rem) 8rem;
-}
-
-.story-header {
-  display: grid;
-  grid-template-columns: minmax(9rem, 0.48fr) minmax(20rem, 1fr) minmax(10rem, 0.4fr);
-  align-items: end;
-  gap: clamp(2rem, 5vw, 6rem);
-  max-width: 92rem;
-  margin: 0 auto clamp(6rem, 13vw, 13rem);
-}
-
-.story-header__date {
-  color: var(--color-muted);
-  font-family: Georgia, "Noto Serif SC", serif;
-  font-size: clamp(1.4rem, 3vw, 3rem);
-  letter-spacing: -0.03em;
-  writing-mode: vertical-rl;
-}
-
-.story-header__title h1 {
-  max-width: 8ch;
-  font-size: clamp(4.8rem, 13vw, 12rem);
-  line-height: 0.82;
-  letter-spacing: -0.075em;
-}
-
-.story-header__note {
-  max-width: 31rem;
-  margin: 2.5rem 0 0;
-  color: var(--color-muted);
-  font-family: Georgia, "Noto Serif SC", serif;
-  font-size: clamp(1.05rem, 1.8vw, 1.45rem);
-  line-height: 1.9;
-}
-
-.story-header__meta {
-  padding-bottom: 0.5rem;
-  color: var(--color-muted);
-  font-size: 0.76rem;
-}
-
-.story-header__meta p {
-  margin: 0 0 1rem;
-}
-
-.story-header__meta ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.story-header__meta li {
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-}
-
-.story-sequence {
-  display: grid;
-  max-width: 92rem;
-  gap: clamp(6rem, 14vw, 15rem);
-  margin: 0 auto;
-}
-
-.story-sequence__item {
-  width: min(74vw, 68rem);
-  margin: 0;
-}
-
-.story-sequence__item.is-position-1 {
-  width: min(55vw, 48rem);
-  justify-self: end;
-}
-
-.story-sequence__item.is-position-2 {
-  width: min(62vw, 56rem);
-  margin-left: clamp(0rem, 8vw, 8rem);
-}
-
-.story-sequence__item button {
-  display: block;
-  width: 100%;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-  background: var(--color-surface);
-  cursor: zoom-in;
-}
-
-.story-sequence__item img {
-  display: block;
-  width: 100%;
-  height: auto;
-  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.story-sequence__item button:hover img,
-.story-sequence__item button:focus-visible img {
-  transform: scale(1.008);
-}
-
-.story-sequence__item figcaption {
-  display: grid;
-  grid-template-columns: 3rem minmax(0, 28rem);
-  gap: 1rem;
-  margin-top: 0.9rem;
-  color: var(--color-muted);
-  font-size: 0.74rem;
-  line-height: 1.6;
-}
-
-.story-page__ending {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  max-width: 92rem;
-  margin: clamp(8rem, 18vw, 18rem) auto 0;
-  padding-top: 2rem;
-  border-top: 1px solid var(--color-line);
-}
-
-.story-page__ending p {
-  margin: 0;
-  font-family: Georgia, "Noto Serif SC", serif;
-  font-size: clamp(1.5rem, 3vw, 3rem);
-}
-
 .about-page {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
@@ -1003,18 +864,12 @@ h1 {
     display: none;
   }
 
-  .time-chapter__header,
-  .time-chapter__photos,
+  .photo-moment__header,
   .home-about {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
 
-  .time-chapter__photos .is-secondary {
-    width: 82%;
-    margin-top: -1rem;
-    justify-self: end;
-  }
 
   .gallery-invitation {
     min-height: 68vh;
@@ -1062,32 +917,6 @@ h1 {
     border-left: 0;
   }
 
-  .story-header {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    margin-bottom: 6rem;
-  }
-
-  .story-header__date {
-    writing-mode: initial;
-  }
-
-  .story-header__title h1 {
-    font-size: clamp(4rem, 23vw, 7rem);
-  }
-
-  .story-sequence {
-    gap: 6rem;
-  }
-
-  .story-sequence__item,
-  .story-sequence__item.is-position-1,
-  .story-sequence__item.is-position-2 {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .story-page__ending,
   .about-page,
   .about-page__footer {
     display: grid;

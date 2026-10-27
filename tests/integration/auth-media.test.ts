@@ -54,7 +54,7 @@ describe('local private originals and public derivatives', () => {
     const directory = await mkdtemp(join(tmpdir(), 'photo-journal-media-')); dirs.push(directory)
     const input = await sharp({ create: { width: 900, height: 600, channels: 3, background: '#758577' } }).jpeg().toBuffer()
     const photo = await processLocalPhoto(input, randomUUID(), 'my-photo.jpg', directory)
-    expect(photo.status).toBe('ready')
+    expect(photo.processingStatus).toBe('ready')
     expect(photo.image?.src).toMatch(/^\/media\/[a-f0-9-]+\/1280.webp$/)
     expect(photo.image?.src).not.toContain('private')
     const metadata = await sharp(await readFile(join(directory, 'public', photo.id, '1280.webp'))).metadata()
