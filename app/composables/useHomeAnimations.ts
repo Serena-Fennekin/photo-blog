@@ -39,7 +39,7 @@ export const useHomeAnimations = (root: Ref<HTMLElement | null>): void => {
           scrollTrigger: {
             trigger: chapter,
             start: 'top 78%',
-            once: true
+            toggleActions: 'play reverse play reverse'
           }
         })
 
@@ -57,7 +57,7 @@ export const useHomeAnimations = (root: Ref<HTMLElement | null>): void => {
           scrollTrigger: {
             trigger: galleryInvitation,
             start: 'top 78%',
-            once: true
+            toggleActions: 'play reverse play reverse'
           }
         })
           .from(galleryInvitation.querySelector('[data-home-motion="gallery-mark"]'), { opacity: 0, y: lift, rotate: narrow ? -4 : -8, duration: 0.72 })
@@ -71,7 +71,7 @@ export const useHomeAnimations = (root: Ref<HTMLElement | null>): void => {
           scrollTrigger: {
             trigger: about,
             start: 'top 78%',
-            once: true
+            toggleActions: 'play reverse play reverse'
           }
         })
           .from(about.querySelector('[data-home-motion="home-about-label"]'), { opacity: 0, x: -distance, duration: 0.62 })

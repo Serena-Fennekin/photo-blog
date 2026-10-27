@@ -33,7 +33,7 @@ const cardSrcset = computed(() => gridSrcset(props.photo.image.srcset))
     >
     <span class="gallery-card__caption">
       <span>{{ photo.storyTitle }}</span>
-      <span>{{ photo.exif.camera }}</span>
+      <span>{{ photo.viewCount }} 次查看<span v-if="photo.exif.camera"> · {{ photo.exif.camera }}</span></span>
     </span>
   </button>
 </template>

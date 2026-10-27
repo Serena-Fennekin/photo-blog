@@ -14,12 +14,19 @@ interface RouteCurtainTiming {
   nextFrame: () => Promise<void>
   wait: (duration: number) => Promise<void>
   reducedMotion: () => boolean
+  snapshot?: () => { html: string; scrollY: number }
 }
 
 const defaultTiming: RouteCurtainTiming = {
   nextFrame: () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
   wait: duration => new Promise(resolve => setTimeout(resolve, duration)),
-  reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  snapshot: () => {
+    const clone = document.querySelector('.site-shell')?.cloneNode(true) as HTMLElement | undefined
+    clone?.querySelectorAll('.route-curtain, script, iframe').forEach(element => element.remove())
+    clone?.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'))
+    return { html: clone?.outerHTML ?? '', scrollY: window.scrollY }
+  }
 }
 
 export const isCurtainTarget = (path: string): boolean => path === '/gallery' || path === '/about'
@@ -27,8 +34,10 @@ export const isCurtainTarget = (path: string): boolean => path === '/gallery' ||
 export const createRouteCurtainController = (
   router: CurtainRouter,
   timing: RouteCurtainTiming = defaultTiming
-): { phase: Readonly<Ref<CurtainPhase>>, dispose: () => void } => {
+ ) => {
   const state = ref<CurtainPhase>('idle')
+  const target = ref<'gallery' | 'about' | null>(null)
+  const snapshot = ref({ html: '', scrollY: 0 })
   let disposed = false
   let targetNavigationPending = false
   let coverPromise: Promise<void> | undefined
@@ -39,7 +48,7 @@ export const createRouteCurtainController = (
     await timing.nextFrame()
     if (disposed) return
     state.value = 'covering'
-    await timing.wait(380)
+    if (target.value === 'gallery') await timing.wait(552)
     if (disposed) return
     state.value = 'covered'
   }
@@ -48,18 +57,21 @@ export const createRouteCurtainController = (
     await timing.nextFrame()
     if (disposed) return
     state.value = 'revealing'
-    await timing.wait(520)
+    await timing.wait(target.value === 'gallery' ? 1748 : 2900)
     if (disposed) return
     state.value = 'idle'
+    snapshot.value = { html: '', scrollY: 0 }
   }
 
   const removeBefore = router.beforeEach(async (to, from) => {
-    if (!isCurtainTarget(to.path) || to.path === from.path || timing.reducedMotion()) return
+    if (!isCurtainTarget(to.path) || to.path === from.path || from.path.startsWith('/admin') || timing.reducedMotion()) return
 
     if (revealPromise) await revealPromise
     if (disposed) return
 
     targetNavigationPending = true
+    target.value = to.path === '/gallery' ? 'gallery' : 'about'
+    snapshot.value = target.value === 'about' ? timing.snapshot?.() ?? { html: '', scrollY: 0 } : { html: '', scrollY: 0 }
     coverPromise ??= cover()
     await coverPromise
   })
@@ -77,6 +89,8 @@ export const createRouteCurtainController = (
 
   return {
     phase: readonly(state) as Readonly<Ref<CurtainPhase>>,
+    target: readonly(target),
+    snapshot: readonly(snapshot),
     dispose: () => {
       disposed = true
       state.value = 'idle'
@@ -86,12 +100,12 @@ export const createRouteCurtainController = (
   }
 }
 
-export const useRouteCurtain = (): { phase: Readonly<Ref<CurtainPhase>> } => {
+export const useRouteCurtain = () => {
   const serverPhase = readonly(ref<CurtainPhase>('idle')) as Readonly<Ref<CurtainPhase>>
-  if (import.meta.server) return { phase: serverPhase }
+  if (import.meta.server) return { phase: serverPhase, target: readonly(ref<'gallery' | 'about' | null>(null)), snapshot: readonly(ref({ html: '', scrollY: 0 })) }
 
   const controller = createRouteCurtainController(useRouter() as unknown as CurtainRouter)
   onScopeDispose(controller.dispose)
 
-  return { phase: controller.phase }
+  return { phase: controller.phase, target: controller.target, snapshot: controller.snapshot }
 }

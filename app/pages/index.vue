@@ -5,9 +5,7 @@ const { data: home } = await useAsyncData('home-page', () => $fetch<HomePageMode
 const homeRoot = ref<HTMLElement | null>(null)
 useHomeAnimations(homeRoot)
 
-if (!home.value?.settings.heroPhoto) {
-  throw createError({ statusCode: 503, statusMessage: '首页照片暂不可用' })
-}
+if (!home.value) throw createError({ statusCode: 503, statusMessage: '网站暂不可用，请稍后重试' })
 
 useSeoMeta({
   title: 'PHOTO JOURNAL — 光与时间的记录',
@@ -18,7 +16,7 @@ useSeoMeta({
 <template>
   <div v-if="home" ref="homeRoot" class="home-page" data-home-motion-root>
     <div data-home-motion="hero">
-      <HomeHero :photo="home.settings.heroPhoto!" />
+      <HomeHero :photo="home.settings.heroPhoto" />
     </div>
 
     <section class="home-page__chapters" aria-label="最近摄影记录">

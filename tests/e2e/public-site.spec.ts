@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
+})
+
 test('browses the public journal across themes, gallery filters, stories, and about', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()

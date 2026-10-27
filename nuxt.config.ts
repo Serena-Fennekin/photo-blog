@@ -1,7 +1,9 @@
 export default defineNuxtConfig({
+  buildDir: process.env.JOURNAL_BUILD_DIR || '.nuxt',
   compatibilityDate: '2026-10-25',
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
   devtools: { enabled: false },
+  vite: { optimizeDeps: { include: ['lenis', 'gsap', 'gsap/ScrollTrigger'] } },
   app: {
     head: {
       htmlAttrs: { lang: 'zh-CN' },

@@ -13,6 +13,24 @@ const emit = defineEmits<{ close: []; navigate: [photoId: string] }>()
 
 const dialog = ref<HTMLElement | null>(null)
 const closeButton = ref<HTMLButtonElement | null>(null)
+const displayedViews = ref(0)
+let countedPhoto: string | null = null
+let touchStart: { x: number; y: number } | null = null
+async function recordVisiblePhoto(event?: Event) {
+  if (typeof window === 'undefined' || !props.open || !props.context) return
+  const image = event?.target instanceof HTMLImageElement ? event.target : dialog.value?.querySelector('figure img') as HTMLImageElement | undefined
+  const id = props.context?.photo.id
+  if (!props.open || !id || !image || !image.complete || !image.naturalWidth || document.visibilityState === 'hidden' || countedPhoto === id || typeof $fetch === 'undefined') return
+  if (image.dataset.lightboxPhotoId !== id) return
+  countedPhoto = id
+  try { const result = await $fetch<{ total: number }>(`/api/public/photos/${id}/view`, { method: 'POST' }); if (props.context?.photo.id === id) displayedViews.value = result.total } catch { /* Viewing is independent of the optional counter. */ }
+}
+function startTouch(event: TouchEvent) { const point = event.changedTouches[0]; touchStart = point ? { x: point.clientX, y: point.clientY } : null }
+function endTouch(event: TouchEvent) {
+  const point = event.changedTouches[0]
+  if (point && touchStart) { const dx = point.clientX - touchStart.x, dy = point.clientY - touchStart.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) navigate(dx < 0 ? nextId.value : previousId.value) }
+  touchStart = null
+}
 let previousFocus: HTMLElement | null = null
 let previousOverflow = ''
 let previousPosition = ''
@@ -113,6 +131,7 @@ const deactivate = () => {
 }
 
 onMounted(() => {
+  document.addEventListener('visibilitychange', recordVisiblePhoto)
   stopOpenWatch = watch(
     () => props.open,
     isOpen => isOpen ? activate() : deactivate(),
@@ -120,9 +139,16 @@ onMounted(() => {
   )
 })
 
-watch(() => props.context?.photo.id, prefetchAdjacent)
+watch(() => props.context?.photo.id, async () => {
+  displayedViews.value = props.context?.photo.viewCount ?? 0
+  countedPhoto = null
+  prefetchAdjacent()
+  await nextTick()
+  void recordVisiblePhoto()
+}, { immediate: true })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', recordVisiblePhoto)
   stopOpenWatch?.()
   if (props.open) deactivate()
 })
@@ -145,7 +171,7 @@ onBeforeUnmount(() => {
 
       <div class="photo-lightbox__stage">
         <button type="button" class="photo-lightbox__nav is-previous" data-action="previous" aria-label="上一张" @click="navigate(previousId)">←</button>
-        <figure>
+        <figure @touchstart.passive="startTouch" @touchend.passive="endTouch">
           <img
             :src="context.photo.image.src"
             :srcset="context.photo.image.srcset"
@@ -153,6 +179,8 @@ onBeforeUnmount(() => {
             :width="context.photo.image.width"
             :height="context.photo.image.height"
             :alt="context.photo.image.alt"
+            :data-lightbox-photo-id="context.photo.id"
+            @load="recordVisiblePhoto"
           >
         </figure>
         <button type="button" class="photo-lightbox__nav is-next" data-action="next" aria-label="下一张" @click="navigate(nextId)">→</button>
@@ -166,7 +194,7 @@ onBeforeUnmount(() => {
           <NuxtLink class="text-link" :to="`/stories/${context.photo.storySlug}`">进入这组记录 ↗</NuxtLink>
         </div>
         <ExifPanel :exif="context.photo.exif" />
-        <p class="photo-lightbox__views">{{ context.photo.viewCount }} 次查看</p>
+        <p class="photo-lightbox__views">{{ displayedViews }} 次查看</p>
       </aside>
     </div>
   </Teleport>

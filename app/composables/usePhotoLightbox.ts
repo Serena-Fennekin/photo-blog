@@ -15,29 +15,37 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
   const context = shallowRef<PhotoContext | null>(null)
   const loading = shallowRef(false)
   const originScrollY = shallowRef<number | null>(null)
+  let generation = 0
+  let disposed = false
   const fetchPhoto = fetchContext ?? ((photoId: string) => $fetch<PhotoContext>(`/api/public/photos/${photoId}`))
 
   const load = async (photoId: string) => {
+    const requestGeneration = ++generation
     loading.value = true
     try {
-      context.value = await fetchPhoto(photoId)
+      const loaded = await fetchPhoto(photoId)
+      if (disposed || requestGeneration !== generation) return false
+      context.value = loaded
+      return true
+    } catch {
+      return false
     } finally {
-      loading.value = false
+      if (requestGeneration === generation) loading.value = false
     }
   }
 
   const openPhoto = async (photoId: string) => {
     if (import.meta.client) originScrollY.value = window.scrollY
-    await load(photoId)
-    if (import.meta.client) history.pushState({ photoId }, '', photoUrl(photoId))
+    if (await load(photoId) && import.meta.client) history.pushState({ photoId }, '', photoUrl(photoId))
   }
 
   const navigatePhoto = async (photoId: string) => {
-    await load(photoId)
-    if (import.meta.client) history.replaceState({ photoId }, '', photoUrl(photoId))
+    if (await load(photoId) && import.meta.client) history.replaceState({ photoId }, '', photoUrl(photoId))
   }
 
   const closePhoto = () => {
+    generation++
+    loading.value = false
     context.value = null
     originScrollY.value = null
     if (!import.meta.client) return
@@ -61,6 +69,8 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
     const photoId = new URL(window.location.href).searchParams.get('photo')
     if (photoId) void load(photoId)
     else {
+      generation++
+      loading.value = false
       context.value = null
       originScrollY.value = null
     }
@@ -72,7 +82,7 @@ export const usePhotoLightbox = (fetchContext?: FetchPhotoContext) => {
     if (photoId) void load(photoId)
   })
 
-  onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
+  onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListener('popstate', onPopState) })
 
   return {
     context,

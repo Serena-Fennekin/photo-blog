@@ -78,7 +78,7 @@ describe('useHomeAnimations', () => {
     wrapper.unmount()
   })
 
-  it('registers ScrollTrigger and creates one once-only timeline per marked section', async () => {
+  it('registers reversible timelines so sections animate again on return', async () => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
     motion.context.mockImplementation((callback: () => void, _root: HTMLElement) => {
       callback()
@@ -102,7 +102,7 @@ describe('useHomeAnimations', () => {
     for (const options of scrollTimelines) {
       expect(options.scrollTrigger).toMatchObject({
         start: 'top 78%',
-        once: true
+        toggleActions: 'play reverse play reverse'
       })
       expect(options.scrollTrigger.trigger).toBeInstanceOf(HTMLElement)
     }

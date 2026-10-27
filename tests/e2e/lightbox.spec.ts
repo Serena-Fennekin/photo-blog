@@ -4,6 +4,7 @@ test('opens from a deep gallery position and restores focus and scroll', async (
   const pageErrors: string[] = []
   page.on('pageerror', error => pageErrors.push(error.message))
   await page.goto('/gallery')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
   const card = page.locator('[data-photo-id="river-1"]')
   await expect(card).toBeEnabled()
   await card.evaluate(element => element.scrollIntoView({ block: 'center' }))
@@ -33,6 +34,7 @@ test('opens from a deep gallery position and restores focus and scroll', async (
 
 test('browser back closes the lightbox and missing photos return 404', async ({ page, request }) => {
   await page.goto('/gallery')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
   await page.locator('[data-photo-id="winter-1"]').click()
   await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
 

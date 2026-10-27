@@ -9,6 +9,12 @@ import TimeChapter from '../../app/components/home/TimeChapter.vue'
 import { createFixtureContentRepository } from '../../server/repositories/fixture-content-repository'
 
 describe('homepage content components', () => {
+  it('keeps a new empty journal browsable before its first cover is selected', () => {
+    const wrapper = mount(HomeHero, { props: { photo: null } })
+    expect(wrapper.text()).toContain('日常，经过光之后')
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.text()).toContain('等待下一次快门')
+  })
   it('renders the hero image responsively with its alt text', async () => {
     const repository = createFixtureContentRepository()
     const photo = (await repository.getPublicSettings()).heroPhoto!

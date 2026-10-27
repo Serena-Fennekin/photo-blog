@@ -71,7 +71,7 @@ describe('createRouteCurtainController', () => {
 
     expect(controller.phase.value).toBe('covering')
     expect(continued).toBe(false)
-    expect(wait).toHaveBeenNthCalledWith(1, 380)
+    expect(wait).toHaveBeenNthCalledWith(1, 552)
 
     cover.resolve()
     await navigation
@@ -80,7 +80,7 @@ describe('createRouteCurtainController', () => {
     const afterNavigation = Promise.resolve(fake.after('/gallery'))
     await Promise.resolve()
     expect(controller.phase.value).toBe('revealing')
-    expect(wait).toHaveBeenNthCalledWith(2, 520)
+    expect(wait).toHaveBeenNthCalledWith(2, 1748)
 
     reveal.resolve()
     await afterNavigation

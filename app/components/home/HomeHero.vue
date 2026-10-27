@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { GalleryPhoto } from '~/types/content'
 
-defineProps<{ photo: GalleryPhoto }>()
+defineProps<{ photo: GalleryPhoto | null }>()
 </script>
 
 <template>
@@ -14,6 +14,7 @@ defineProps<{ photo: GalleryPhoto }>()
 
     <figure class="home-hero__frame" data-home-motion="hero-image">
       <img
+        v-if="photo"
         :src="photo.image.src"
         :srcset="photo.image.srcset"
         sizes="(max-width: 760px) 88vw, 48vw"
@@ -22,7 +23,8 @@ defineProps<{ photo: GalleryPhoto }>()
         :alt="photo.image.alt"
         fetchpriority="high"
       >
-      <figcaption>
+      <div v-else class="home-hero__empty">等待下一次快门。</div>
+      <figcaption v-if="photo">
         <span>{{ photo.storyTitle }}</span>
         <span>{{ photo.exif.capturedAt?.slice(0, 10).replaceAll('-', '.') }}</span>
       </figcaption>

@@ -23,6 +23,7 @@ describe('story page', () => {
   })
 
   it('turns an unknown story slug into a 404 response', async () => {
+    vi.doMock('../../server/repositories', () => ({ getContentRepository: createFixtureContentRepository }))
     vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
     vi.stubGlobal('getRouterParam', (event: { context: { params: Record<string, string> } }, key: string) => event.context.params[key])
     vi.stubGlobal('createError', (input: Record<string, unknown>) => Object.assign(new Error(String(input.statusMessage)), input))
