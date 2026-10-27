@@ -650,6 +650,8 @@ h1 {
 
 .photo-lightbox__stage figure {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   height: calc(100vh - 4rem);
   margin: 0;
   place-items: center;

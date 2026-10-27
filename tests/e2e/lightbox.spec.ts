@@ -44,3 +44,43 @@ test('browser back closes the lightbox and missing photos return 404', async ({ 
   const response = await request.get('/api/public/photos/missing-photo')
   expect(response.status()).toBe(404)
 })
+
+test('fits portrait and landscape photos inside the viewer on large and resized screens', async ({ page, isMobile }) => {
+  await page.route('https://images.unsplash.com/**', route => {
+    const landscape = route.request().url().includes('photo-1483347756197-71ef80e95f73')
+    return route.fulfill({
+      contentType: 'image/svg+xml',
+      body: `<svg xmlns="http://www.w3.org/2000/svg" width="${landscape ? 2400 : 1600}" height="${landscape ? 1600 : 2400}"><rect width="100%" height="100%" fill="#67726c"/></svg>`
+    })
+  })
+  const viewports = isMobile
+    ? [{ width: 390, height: 844 }, { width: 530, height: 720 }]
+    : [{ width: 2560, height: 1295 }, { width: 1280, height: 720 }]
+  await page.setViewportSize(viewports[0]!)
+  await page.goto('/gallery?photo=winter-3')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
+  const dialog = page.getByRole('dialog', { name: '照片详情' })
+  const image = dialog.locator('figure img')
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport)
+    for (const [photoId, ratio] of [['winter-3', 2 / 3], ['winter-2', 3 / 2]] as const) {
+      if (photoId === 'winter-3') {
+        if (await image.getAttribute('data-lightbox-photo-id') === 'winter-2') await dialog.getByRole('button', { name: '下一张' }).click()
+      } else await dialog.getByRole('button', { name: '上一张' }).click()
+      await expect(image).toHaveAttribute('data-lightbox-photo-id', photoId)
+      await expect.poll(() => image.evaluate(el => el.complete && el.naturalWidth > 0)).toBe(true)
+      const bounds = await image.evaluate(el => ({
+        image: el.getBoundingClientRect().toJSON(),
+        figure: el.closest('figure')!.getBoundingClientRect().toJSON(),
+        viewport: { width: window.innerWidth, height: window.innerHeight }
+      }))
+      expect(bounds.image.height).toBeGreaterThan(0)
+      expect(bounds.image.width / bounds.image.height).toBeCloseTo(ratio, 2)
+      expect(bounds.image.top).toBeGreaterThanOrEqual(Math.max(0, bounds.figure.top) - 1)
+      expect(bounds.image.left).toBeGreaterThanOrEqual(Math.max(0, bounds.figure.left) - 1)
+      expect(bounds.image.bottom, `${photoId} must fit the available viewer height`).toBeLessThanOrEqual(Math.min(bounds.viewport.height, bounds.figure.bottom) + 1)
+      expect(bounds.image.right).toBeLessThanOrEqual(Math.min(bounds.viewport.width, bounds.figure.right) + 1)
+    }
+  }
+})
