@@ -16,6 +16,11 @@ export function sanitizeExif(input: Record<string, unknown> = {}): PublicExif {
   else if (typeof input.shutter === 'string') result.shutter = input.shutter.slice(0, 32)
   const date = input.DateTimeOriginal ?? input.capturedAt
   if (date instanceof Date && !Number.isNaN(date.getTime())) result.capturedAt = date.toISOString()
-  else if (typeof date === 'string' && Number.isFinite(Date.parse(date))) result.capturedAt = date
+  else if (typeof date === 'string') {
+    let capturedAt = date.trim().replace(/^(\d{4}):(\d{2}):(\d{2})[ T]/, '$1-$2-$3T').replace(' ', 'T')
+    const offset = input.OffsetTimeOriginal ?? input.OffsetTime
+    if (/T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(capturedAt) && typeof offset === 'string' && /^[+-]\d{2}:\d{2}$/.test(offset)) capturedAt += offset
+    if (Number.isFinite(Date.parse(capturedAt))) result.capturedAt = capturedAt
+  }
   return result
 }

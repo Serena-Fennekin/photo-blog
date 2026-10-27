@@ -36,6 +36,18 @@ describe('photo lightbox', () => {
     expect(wrapper.text()).not.toContain('SECRET')
   })
 
+  it.each([
+    ['2026-08-19T04:37:12Z', '2026-08-19 12:37'],
+    ['2026-08-18T19:05:00.000Z', '2026-08-19 03:05'],
+    ['2026-08-19T12:37:12+08:00', '2026-08-19 12:37'],
+    ['2026-08-19T12:37:12+02:00', '2026-08-19 12:37'],
+    ['2026-08-19T12:37:12', '2026-08-19 12:37'],
+    ['2026-08-19', '2026-08-19']
+  ])('displays camera capture time correctly for %s', (capturedAt, expected) => {
+    const wrapper = mount(ExifPanel, { props: { exif: { capturedAt } } })
+    expect(wrapper.get('dd').text()).toBe(expected)
+  })
+
   it('navigates within siblings, locks the page, closes on Escape, and restores focus', async () => {
     const context = await createFixtureContentRepository().getPhotoContext('winter-2')
     const trigger = document.createElement('button')
@@ -55,6 +67,7 @@ describe('photo lightbox', () => {
     })
 
     expect(document.body.style.overflow).toBe('hidden')
+    expect(wrapper.findAll('a')).toHaveLength(0)
     await wrapper.get('[data-action="next"]').trigger('click')
     expect(wrapper.emitted('navigate')?.[0]).toEqual(['winter-3'])
 

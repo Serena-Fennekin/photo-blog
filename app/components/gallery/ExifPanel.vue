@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import type { PublicExif } from '~/types/content'
+import { formatCaptureTime } from '~/utils/capture-time'
 
 const props = defineProps<{ exif: PublicExif }>()
 
@@ -12,7 +13,7 @@ const rows = computed(() => [
   { label: '光圈', value: props.exif.aperture === undefined ? undefined : `f/${props.exif.aperture}` },
   { label: '快门', value: props.exif.shutter },
   { label: 'ISO', value: props.exif.iso === undefined ? undefined : String(props.exif.iso) },
-  { label: '拍摄时间', value: props.exif.capturedAt?.replace('T', ' ').slice(0, 16) }
+  { label: '拍摄时间', value: formatCaptureTime(props.exif.capturedAt) }
 ].filter((row): row is { label: string; value: string } => Boolean(row.value)))
 </script>
 

@@ -11,36 +11,9 @@ const { data: story } = await useAsyncData(
 
 if (!story.value) throw createError({ statusCode: 404, statusMessage: '这组摄影记录不存在' })
 
-const lightbox = usePhotoLightbox()
-const lightboxOpen = lightbox.isOpen
-const lightboxContext = lightbox.context
-const lightboxOriginScrollY = lightbox.originScrollY
-const storyReady = ref(false)
-
-onMounted(() => {
-  storyReady.value = true
-})
-
-useSeoMeta({
-  title: () => `${story.value?.title ?? '摄影记录'} — PHOTO JOURNAL`,
-  description: () => story.value?.note ?? '一组个人摄影记录。'
-})
+await navigateTo({ path: '/gallery', query: { photo: story.value.cover.id } }, { replace: true, redirectCode: 302 })
 </script>
 
 <template>
-  <article v-if="story" class="story-page">
-    <StoryHeader :story="story" />
-    <StorySequence :story="story" :interactive="storyReady" @select="lightbox.openPhoto" />
-    <nav class="story-page__ending" aria-label="摄影记录末尾导航">
-      <p>这一组记录，到这里。</p>
-      <NuxtLink class="text-link" to="/gallery">回到摄影集</NuxtLink>
-    </nav>
-    <GalleryPhotoLightbox
-      :open="lightboxOpen"
-      :context="lightboxContext"
-      :origin-scroll-y="lightboxOriginScrollY"
-      @close="lightbox.closePhoto"
-      @navigate="lightbox.navigatePhoto"
-    />
-  </article>
+  <p role="status">正在打开摄影集…</p>
 </template>

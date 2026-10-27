@@ -5,7 +5,9 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
 })
 
-test('browses the public journal across themes, gallery filters, stories, and about', async ({ page }) => {
+test('browses the public journal across themes, gallery filters, photo links, and about', async ({ page }) => {
+  // Allow cold development chunk compilation plus three intentional route curtains.
+  test.setTimeout(60_000)
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
@@ -31,14 +33,14 @@ test('browses the public journal across themes, gallery filters, stories, and ab
   await expect(page.locator('[data-photo-id^="river-"]')).toHaveCount(0)
 
   await page.goto('/')
-  await page.getByRole('link', { name: /翻阅这组记录/ }).first().click()
-  await expect(page.getByRole('heading', { name: '冬日侧光', level: 1 })).toBeVisible()
+  await page.getByRole('link', { name: /在摄影集中查看/ }).first().click()
+  await expect(page).toHaveURL(/\/gallery\?photo=winter-1/)
   await expect(curtain).toHaveAttribute('data-state', 'idle')
-  await expect(page.locator('[data-story-photo-id]')).toHaveCount(3)
+  await expect(page.locator('[data-photo-id^="winter-"]')).toHaveCount(3)
   const imageAlts = await page.locator('main img').evaluateAll(images => images.map(image => image.getAttribute('alt')))
   expect(imageAlts.every(alt => alt !== null)).toBe(true)
-  await page.locator('[data-story-photo-id]').first().getByRole('button').click()
   await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
+  await expect(page.getByRole('dialog').getByRole('link')).toHaveCount(0)
   await page.getByRole('button', { name: /关闭/ }).click()
   await expect(page.getByRole('dialog', { name: '照片详情' })).toBeHidden()
 
@@ -47,6 +49,12 @@ test('browses the public journal across themes, gallery filters, stories, and ab
   await aboutNavigation
   await expect(page.getByRole('heading', { name: '关于我', level: 1 })).toBeVisible()
   await expect(curtain).toHaveAttribute('data-state', 'idle')
+})
+
+test('opens legacy record bookmarks in the gallery', async ({ page }) => {
+  await page.goto('/stories/winter-light')
+  await expect(page).toHaveURL(/\/gallery\?photo=winter-1/)
+  await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
 })
 
 test('keeps all homepage content visible with reduced motion', async ({ page }) => {

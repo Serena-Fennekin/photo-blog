@@ -18,7 +18,7 @@ const displayDate = computed(() => props.story.capturedOn.replaceAll('-', '.'))
         <p class="eyebrow">A PHOTOGRAPHIC NOTE</p>
         <h2>{{ story.title }}</h2>
         <p v-if="story.note" class="time-chapter__note">{{ story.note }}</p>
-        <NuxtLink class="text-link" :to="`/stories/${story.slug}`">翻阅这组记录 ↗</NuxtLink>
+        <NuxtLink class="text-link" :to="{ path: '/gallery', query: { photo: story.cover.id } }">在摄影集中查看 ↗</NuxtLink>
       </div>
     </header>
 

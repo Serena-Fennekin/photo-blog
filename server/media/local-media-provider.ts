@@ -23,7 +23,7 @@ export async function processLocalPhoto(input: Buffer, id: string, filename: str
     await writeFile(join(root, 'public', id, `${width}.webp`), data)
     variants.push(`/media/${id}/${width}.webp ${info.width}w`)
   }
-  const exif = await exifr.parse(input, { pick: ['Make', 'Model', 'LensModel', 'FocalLength', 'FNumber', 'ISO', 'ExposureTime', 'DateTimeOriginal'] }).catch(() => null)
+  const exif = await exifr.parse(input, { reviveValues: false, pick: ['Make', 'Model', 'LensModel', 'FocalLength', 'FNumber', 'ISO', 'ExposureTime', 'DateTimeOriginal', 'OffsetTimeOriginal', 'OffsetTime'] }).catch(() => null)
   const rotated = (metadata.orientation ?? 1) >= 5
   return { id, status: 'ready', originalKey: `${id}.original`, exif: sanitizeExif(exif ?? {}), caption: '', image: { src: `/media/${id}/1280.webp`, srcset: [...new Map(variants.map(value => [value.split(' ').at(-1), value])).values()].join(', '), width: rotated ? metadata.height : metadata.width, height: rotated ? metadata.width : metadata.height, alt: filename.replace(/\.[^.]+$/, '').slice(0, 300) } }
 }

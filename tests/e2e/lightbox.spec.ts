@@ -45,6 +45,23 @@ test('browser back closes the lightbox and missing photos return 404', async ({ 
   expect(response.status()).toBe(404)
 })
 
+test('keeps enlarged camera metadata readable without a record-details link', async ({ page, isMobile }) => {
+  if (!isMobile) await page.setViewportSize({ width: 2560, height: 1295 })
+  await page.goto('/gallery?photo=winter-3')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
+  const dialog = page.getByRole('dialog', { name: '照片详情' })
+  await expect(dialog.getByRole('link')).toHaveCount(0)
+  const exif = dialog.getByRole('definition').first()
+  await exif.scrollIntoViewIfNeeded()
+  const typography = await dialog.locator('.exif-panel').evaluate(panel => ({
+    label: parseFloat(getComputedStyle(panel.querySelector('dt')!).fontSize),
+    value: parseFloat(getComputedStyle(panel.querySelector('dd')!).fontSize)
+  }))
+  expect(typography.label).toBeGreaterThanOrEqual(15)
+  expect(typography.value).toBeGreaterThanOrEqual(18)
+  await expect(dialog.getByText('2025-12-16 15:42')).toBeVisible()
+})
+
 test('fits portrait and landscape photos inside the viewer on large and resized screens', async ({ page, isMobile }) => {
   await page.route('https://images.unsplash.com/**', route => {
     const landscape = route.request().url().includes('photo-1483347756197-71ef80e95f73')

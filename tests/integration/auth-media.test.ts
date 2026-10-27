@@ -35,6 +35,21 @@ describe('administrator authentication', () => {
 })
 
 describe('local private originals and public derivatives', () => {
+  it.each(['UTC', 'Asia/Shanghai'])('preserves original camera time and offset on a %s server', async (timezone) => {
+    const previousTimezone = process.env.TZ
+    process.env.TZ = timezone
+    try {
+      const directory = await mkdtemp(join(tmpdir(), 'journal-capture-time-')); dirs.push(directory)
+      const input = await sharp({ create: { width: 60, height: 40, channels: 3, background: '#758577' } })
+        .withExif({ IFD2: { DateTimeOriginal: '2026:08:19 12:37:12', OffsetTimeOriginal: '+08:00' } }).jpeg().toBuffer()
+      const photo = await processLocalPhoto(input, randomUUID(), 'camera-time.jpg', directory)
+      expect(photo.exif?.capturedAt).toBe('2026-08-19T12:37:12+08:00')
+    } finally {
+      if (previousTimezone === undefined) delete process.env.TZ
+      else process.env.TZ = previousTimezone
+    }
+  })
+
   it('generates display variants without EXIF and keeps the original out of image URLs', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'photo-journal-media-')); dirs.push(directory)
     const input = await sharp({ create: { width: 900, height: 600, channels: 3, background: '#758577' } }).jpeg().toBuffer()

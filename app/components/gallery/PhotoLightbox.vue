@@ -191,7 +191,6 @@ onBeforeUnmount(() => {
           <p class="eyebrow">{{ String(context.index + 1).padStart(2, '0') }} / {{ String(context.siblings.length).padStart(2, '0') }}</p>
           <h2>{{ context.photo.storyTitle }}</h2>
           <p v-if="context.photo.caption" class="photo-lightbox__caption">{{ context.photo.caption }}</p>
-          <NuxtLink class="text-link" :to="`/stories/${context.photo.storySlug}`">进入这组记录 ↗</NuxtLink>
         </div>
         <ExifPanel :exif="context.photo.exif" />
         <p class="photo-lightbox__views">{{ displayedViews }} 次查看</p>
