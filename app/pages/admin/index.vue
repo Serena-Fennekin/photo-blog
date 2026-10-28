@@ -100,16 +100,15 @@ function drop(index: number) { const from = photos.value?.findIndex(photo => pho
       <label class="admin-bulk-category">统一分类<select v-model="bulkCategory"><option value="">选择分类</option><option v-for="category in categories?.filter(item => item.active)" :key="category.slug" :value="category.slug">{{ category.name }}</option></select></label>
       <button class="admin-secondary" :disabled="!selected.length || !bulkCategory" @click="apply({ categorySlugs: [bulkCategory] })">应用所选分类</button><button class="admin-quiet" :disabled="!selected.length" @click="apply({ status: 'deleted' })">移除所选</button>
     </fieldset>
-    <p class="admin-meta">拖动卡片或使用前移、后移调整整个摄影集的顺序。</p>
+    <p class="admin-meta">拖动卡片调整整个摄影集的顺序，松开后自动保存。</p>
     <fieldset class="admin-photo-grid admin-photo-library" :disabled="busy || uploading">
-      <article v-for="(photo,index) in photos" :key="photo.id" class="admin-photo-card" :data-admin-photo-id="photo.id" :draggable="!busy && !uploading" @dragstart="dragId=photo.id" @dragover.prevent @drop.prevent="drop(index)">
+      <article v-for="(photo,index) in photos" :key="photo.id" class="admin-photo-card" :data-admin-photo-id="photo.id" :draggable="!busy && !uploading" @dragstart="dragId=photo.id" @dragend="dragId=null" @dragover.prevent @drop.prevent="drop(index)">
         <img v-if="photo.image" :src="photo.image.src" :alt="photo.image.alt" loading="lazy" draggable="false">
         <div v-else class="admin-photo-failed">{{ photo.error || '图片处理失败' }}<button class="admin-secondary" @click="retry(photo.id)">重试处理</button></div>
         <div class="admin-photo-fields">
-          <label class="admin-check"><input v-model="selected" type="checkbox" :value="photo.id" :disabled="photo.processingStatus !== 'ready'" :aria-label="'选择照片：' + (photo.title || photo.id)">{{ photo.status === 'published' ? '已发布' : '草稿' }}</label>
+          <label class="admin-check"><input v-model="selected" type="checkbox" :value="photo.id" :disabled="photo.processingStatus !== 'ready'" :aria-label="'选择照片：' + (photo.title || photo.id)"><span class="admin-photo-status" :data-status="photo.status">{{ photo.status === 'published' ? '已发布' : '草稿' }}</span></label>
           <h2>{{ photo.title || '未命名照片' }}</h2><p class="admin-meta">{{ photo.capturedOn }}<span v-if="photo.location"> · {{ photo.location }}</span></p>
           <div class="admin-row-actions"><button class="admin-secondary" @click="navigateTo('/admin/photos/' + photo.id)">编辑</button><a v-if="photo.status === 'published'" :href="'/gallery?photo=' + photo.id" target="_blank" rel="noopener">查看 ↗</a><button class="admin-quiet" @click="apply({status:'deleted'},[photo.id])">移除</button></div>
-          <div class="admin-row-actions"><button class="admin-quiet" :disabled="index === 0" @click="move(index,index-1)">前移</button><button class="admin-quiet" :disabled="index === (photos?.length || 0)-1" @click="move(index,index+1)">后移</button></div>
         </div>
       </article>
     </fieldset>

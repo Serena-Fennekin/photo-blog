@@ -3,8 +3,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-10-25',
   css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
   devtools: { enabled: false },
+  runtimeConfig: { public: { icpNumber: '' } },
   routeRules: { '/stories/**': { redirect: '/gallery' }, '/admin/stories/**': { redirect: '/admin' } },
-  vite: { optimizeDeps: { include: ['lenis', 'gsap', 'gsap/ScrollTrigger'] } },
+  vite: {
+    cacheDir: process.env.JOURNAL_BUILD_DIR ? `${process.env.JOURNAL_BUILD_DIR}/vite-cache` : 'node_modules/.cache/vite',
+    optimizeDeps: { include: ['lenis', 'gsap', 'gsap/ScrollTrigger'] }
+  },
   app: {
     head: {
       htmlAttrs: { lang: 'zh-CN' },

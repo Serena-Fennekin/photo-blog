@@ -50,6 +50,10 @@ describe('homepage library and duplicate feedback', () => {
     db.updatePhoto('p2', { status: 'draft' })
     expect((await repository.listHomePhotos(100)).map(photo => photo.id)).toEqual(['p0'])
     expect(() => db.updateSettings({ heroMode: 'manual', featuredPhotoIds: ['p2'] })).toThrow()
+    db.updateSettings({ heroMode: 'manual', heroPhotoId: 'p0' })
+    db.updatePhoto('p0', { status: 'draft' })
+    expect(() => db.updateSettings({ featuredPhotoIds: ['p1'] })).not.toThrow()
+    expect((await repository.listHomePhotos(100)).map(photo => photo.id)).toEqual(['p1'])
   })
   it('backfills old original hashes, cleans existing city copy once, and preserves original EXIF and counters', () => {
     const dir = mkdtempSync(join(tmpdir(), 'journal-home-')); directories.push(dir)

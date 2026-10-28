@@ -11,7 +11,7 @@ test('browses the public journal across themes, gallery filters, photo links, an
   // Allow cold development chunk compilation plus three intentional route curtains.
   test.setTimeout(60_000)
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /看见喜欢的，\s*就拍下来。/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /有些片刻没有故事/ })).toBeVisible()
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
   await expect(page.locator('[data-featured-photo-id]')).toHaveCount(4)
   const curtain = page.locator('[data-route-curtain]')
@@ -50,6 +50,10 @@ test('browses the public journal across themes, gallery filters, photo links, an
   await expect(curtain).not.toHaveAttribute('data-state', 'idle')
   await aboutNavigation
   await expect(page.getByRole('heading', { name: '关于我', level: 1 })).toBeVisible()
+  expect(await page.locator('.about-page h1').evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeLessThanOrEqual(29)
+  await expect(page.locator('.about-page__body')).toContainText('骑行')
+  await expect(page.locator('.about-page__body')).toContainText('谢谢你')
+  await expect(page.locator('.about-page__footer')).toHaveCount(0)
   await expect(curtain).toHaveAttribute('data-state', 'idle')
 })
 
@@ -64,8 +68,8 @@ test('keeps all homepage content visible with reduced motion', async ({ page }) 
   await page.goto('/')
 
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'static')
-  await expect(page.getByRole('heading', { name: /看见喜欢的，\s*就拍下来。/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '随手挑了几张' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /有些片刻没有故事/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '留在照片里的日子' })).toBeVisible()
   await expect(page.getByRole('link', { name: /进入摄影集/ })).toBeVisible()
 })
 
@@ -78,33 +82,36 @@ test('keeps the enlarged navigation and category labels readable on the viewport
     await expect(link).toBeInViewport()
   }
   await expect(page.locator('[data-category="nature"]')).toHaveCSS('font-size', '18px')
+  expect(await page.locator('.gallery-heading h1').evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeLessThanOrEqual(104)
+  expect(await page.locator('.gallery-heading > p').evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(18)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
-test('places the invitation second and centers finite featured photos on mobile, with two columns on desktop', async ({ page, isMobile }) => {
+test('opens with the quotation and shows uneven desktop photos or centered mobile photos in source order', async ({ page, isMobile }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
-  await expect(page.locator('.home-page > *').nth(1)).toHaveClass('gallery-invitation')
+  await expect(page.locator('.home-page > *').first()).toHaveClass('gallery-invitation')
+  await expect(page.locator('main h1')).toHaveCount(1)
+  await expect(page.locator('.home-hero')).toHaveCount(0)
   const grid = page.locator('.home-featured__grid')
-  await expect(grid).toHaveCSS('column-count', isMobile ? '1' : '2')
-  const cards = await page.locator('[data-featured-photo-id]').evaluateAll(elements => elements.map(element => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, center: (r.left + r.right) / 2 } }))
+  await expect(grid).toHaveCSS('display', isMobile ? 'block' : 'grid')
+  const cards = await page.locator('[data-featured-photo-id]').evaluateAll(elements => elements.map(element => { const r = element.getBoundingClientRect(); return { id: element.getAttribute('data-featured-photo-id'), left: r.left, right: r.right, top: r.top, width: r.width, center: (r.left + r.right) / 2 } }))
   expect(cards).toHaveLength(4)
   for (const card of cards) {
     expect(card.left).toBeGreaterThanOrEqual(0)
     expect(card.right).toBeLessThanOrEqual(page.viewportSize()!.width + 1)
     if (isMobile) expect(Math.abs(card.center - page.viewportSize()!.width / 2)).toBeLessThan(2)
   }
-  if (!isMobile) expect(new Set(cards.map(card => Math.round(card.left))).size).toBe(2)
+  expect(cards.map(card => card.id)).toEqual(['winter-1', 'winter-2', 'winter-3', 'river-1'])
+  if (!isMobile) {
+    expect(cards[2]!.top - cards[0]!.top).toBeGreaterThan(90)
+    expect(cards[0]!.width).toBeGreaterThan(cards[2]!.width)
+  }
   const text = page.locator('.home-featured__photo figcaption').first()
   const fits = await text.evaluate(element => { element.textContent = 'W'.repeat(1500); return element.scrollWidth <= element.clientWidth + 1 })
   expect(fits).toBe(true)
   await expect(page.locator('body')).not.toContainText(/\u676d\u5dde|hang[\s_-]*zhou/i)
-  await expect(page.locator('.home-hero img')).toHaveCSS('object-fit', 'contain')
-  await expect(page.locator('.home-hero img')).toHaveCSS('border-top-left-radius', '0px')
-  if (isMobile) {
-    const caption = await page.locator('.home-hero figcaption').boundingBox()
-    const navigation = await page.getByRole('navigation', { name: '主导航' }).boundingBox()
-    expect(caption!.y + caption!.height, 'hero caption must stay above the floating navigation').toBeLessThan(navigation!.y)
-  }
+  await expect(page.locator('.site-footer__registration')).toHaveText('备案信息待更新')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })

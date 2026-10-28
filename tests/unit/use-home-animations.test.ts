@@ -36,10 +36,6 @@ const Harness = defineComponent({
   },
   template: `
     <main ref="root">
-      <section data-home-motion="hero">
-        <p data-home-motion="hero-copy">内容始终可见</p>
-        <figure data-home-motion="hero-image" />
-      </section>
       <figure v-for="photo in 2" :key="photo" data-home-motion="featured-photo" />
       <section data-home-motion="gallery-invitation">
         <p data-home-motion="gallery-mark" />
@@ -72,7 +68,7 @@ describe('useHomeAnimations', () => {
     expect(motion.context).not.toHaveBeenCalled()
     expect(motion.registerPlugin).not.toHaveBeenCalled()
     expect(motion.timeline).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-home-motion="hero"]').isVisible()).toBe(true)
+    expect(wrapper.get('[data-home-motion="gallery-invitation"]').isVisible()).toBe(true)
     wrapper.unmount()
   })
 

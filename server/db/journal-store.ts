@@ -140,10 +140,10 @@ export class JournalStore {
     return JSON.parse((this.db.prepare('SELECT payload FROM settings WHERE id=1').get() as { payload: string }).payload)
   }
   updateSettings(input: unknown) {
-    const change = z.object({ heroMode: z.enum(['manual', 'latest']), heroPhotoId: z.string().nullable().optional(), featuredPhotoIds: z.array(z.string()).max(6).refine(ids => new Set(ids).size === ids.length).optional() }).strict().parse(input)
+    const change = z.object({ heroMode: z.enum(['manual', 'latest']).optional(), heroPhotoId: z.string().nullable().optional(), featuredPhotoIds: z.array(z.string()).max(6).refine(ids => new Set(ids).size === ids.length).optional() }).strict().parse(input)
     return this.transaction(() => {
       const settings = { ...this.getSettings(), ...change }
-      if (settings.heroMode === 'manual' && settings.heroPhotoId && !this.publicPhotos().some(photo => photo.id === settings.heroPhotoId)) throw new Error('请选择已发布的照片作为首页主图')
+      if ((change.heroMode !== undefined || change.heroPhotoId !== undefined) && settings.heroMode === 'manual' && settings.heroPhotoId && !this.publicPhotos().some(photo => photo.id === settings.heroPhotoId)) throw new Error('请选择已发布的照片作为首页主图')
       if (change.featuredPhotoIds?.some(id => !this.publicPhotos().some(photo => photo.id === id))) throw new Error('首页精选只能选择已发布的照片，请刷新后重新选择')
       this.db.prepare('UPDATE settings SET payload=? WHERE id=1').run(JSON.stringify(settings))
       return settings

@@ -9,24 +9,20 @@ useHomeAnimations(homeRoot)
 if (!home.value) throw createError({ statusCode: 503, statusMessage: '网站暂不可用，请稍后重试' })
 
 useSeoMeta({
-  title: 'PHOTO JOURNAL — 随手拍下的日常',
-  description: '花草、小动物，还有散步时看到的风景。一个放日常照片的小相册。'
+  title: 'PHOTO JOURNAL — 留在照片里的日子',
+  description: '把生活里的美好记下来，等某天再看，还能回到当时。'
 })
 </script>
 
 <template>
   <div v-if="home" ref="homeRoot" class="home-page" data-home-motion-root>
-    <div data-home-motion="hero">
-      <HomeHero :photo="home.settings.heroPhoto" />
-    </div>
-
     <HomeGalleryInvitation />
 
     <FeaturedPhotos :photos="home.photos" />
 
     <section class="home-about" data-home-motion="home-about">
-      <p class="eyebrow" data-home-motion="home-about-label">拍照的人</p>
-      <p data-home-motion="home-about-copy">平时喜欢拍拍花草、小动物，也拍些散步时看到的风景。这里放的，就是这些小记录。</p>
+      <p class="eyebrow" data-home-motion="home-about-label">快门之外</p>
+      <p data-home-motion="home-about-copy">照片让我回到当时，车轮带我走向下一程。喜欢在停留与出发之间，记下生活细小而真实的模样。</p>
       <NuxtLink class="text-link" to="/about" data-home-motion="home-about-link">了解更多 ↗</NuxtLink>
     </section>
   </div>

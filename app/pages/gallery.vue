@@ -63,7 +63,7 @@ useSeoMeta({
         <p class="eyebrow">THE ARCHIVE</p>
         <h1>摄影集</h1>
       </div>
-      <p>每一张照片，都有自己的时间与光线。选择一个主题，或只是向下慢慢观看。</p>
+      <p>每一张照片，都留着一段可以重返的日常。选择一个主题，或只是向下慢慢观看。</p>
     </header>
 
     <GalleryCategoryFilter

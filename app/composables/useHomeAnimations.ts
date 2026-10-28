@@ -27,12 +27,6 @@ export const useHomeAnimations = (root: Ref<HTMLElement | null>): void => {
       const narrow = window.matchMedia('(max-width: 760px)').matches
       const distance = narrow ? 22 : 54
       const lift = narrow ? 18 : 42
-      const heroTimeline = gsap.timeline({ defaults: { ease: 'power2.out' } })
-
-      heroTimeline
-        .from('[data-home-motion="hero-copy"]', { opacity: 0, y: narrow ? 18 : 32, duration: 0.72 })
-        .from('[data-home-motion="hero-image"]', { opacity: 0, scale: narrow ? 0.99 : 0.965, duration: 0.95 }, '-=0.46')
-
       root.value?.querySelectorAll<HTMLElement>('[data-home-motion="featured-photo"]').forEach((photo) => {
         gsap.from(photo, {
           opacity: 0, y: lift, duration: 1, ease: 'power2.out',
