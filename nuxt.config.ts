@@ -1,5 +1,6 @@
 export default defineNuxtConfig({
   buildDir: process.env.JOURNAL_BUILD_DIR || '.nuxt',
+  devServer: { host: '127.0.0.1' },
   compatibilityDate: '2026-10-25',
   css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
   devtools: { enabled: false },

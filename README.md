@@ -4,7 +4,7 @@
 
 ```powershell
 npm install
-npm run dev -- --host 127.0.0.1 --port 3000
+npm run dev
 ```
 
 打开 [网站](http://127.0.0.1:3000/) 或 [管理入口](http://127.0.0.1:3000/admin/login)。首次在本机进入后台可自行创建管理员。项目自带 Node 22，电脑全局 Node 20 无需更换。
