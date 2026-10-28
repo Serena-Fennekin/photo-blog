@@ -264,7 +264,7 @@ h1 {
   grid-template-columns: 1fr minmax(18rem, 0.65fr);
   align-items: end;
   gap: 3rem;
-  max-width: 92rem;
+  max-width: 128rem;
   margin: 0 auto 4rem;
   padding-inline: clamp(0.25rem, 2vw, 2rem);
 }
@@ -285,16 +285,14 @@ h1 {
 }
 
 .category-filter {
-  position: sticky;
-  z-index: 20;
-  top: 5.35rem;
+  position: static;
   display: flex;
-  max-width: 92rem;
+  max-width: 128rem;
   gap: 0.7rem;
   margin: 0 auto 2rem;
   padding: 0.7rem clamp(0.25rem, 2vw, 2rem);
   overflow-x: auto;
-  background: linear-gradient(var(--color-bg) 78%, transparent);
+  background: transparent;
   scrollbar-width: none;
 }
 
@@ -319,7 +317,7 @@ h1 {
 }
 
 .gallery-grid {
-  max-width: 92rem;
+  max-width: 128rem;
   margin: 0 auto;
   columns: 3 20rem;
   column-gap: clamp(0.7rem, 1.5vw, 1.4rem);
@@ -640,10 +638,6 @@ h1 {
   .gallery-heading {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-  }
-
-  .category-filter {
-    top: 4.7rem;
   }
 
   .gallery-grid {

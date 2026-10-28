@@ -151,6 +151,8 @@ test('holds the themed camera curtain during delayed navigation and replays with
 })
 
 test('switches decorative backgrounds without blocking navigation and persists the visitor choice', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
   const toggle = page.getByRole('button', { name: '背景特效', exact: true })
   await expect(toggle).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
@@ -158,6 +160,9 @@ test('switches decorative backgrounds without blocking navigation and persists t
   await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-scene', 'night')
   await page.getByRole('button', { name: '浅色', exact: true }).click()
   await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-scene', 'pond')
+  await page.mouse.move(80, 330)
+  await page.mouse.move(260, 460, { steps: 12 })
+  await page.waitForTimeout(120)
   await toggle.click()
   await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'false')
   await page.reload()
@@ -165,4 +170,24 @@ test('switches decorative backgrounds without blocking navigation and persists t
   await toggle.click()
   await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
   expect(await page.locator('[data-ambient-background]').evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none')
+  expect(errors).toEqual([])
+})
+
+test('uses more of a large monitor and lets categories scroll clear of photographs', async ({ page, isMobile }) => {
+  if (!isMobile) {
+    await page.setViewportSize({ width: 2560, height: 1440 })
+    await page.goto('/about')
+    expect((await page.locator('.about-page').boundingBox())!.width).toBeGreaterThanOrEqual(1800)
+    expect(await page.locator('.about-page__body').evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(20)
+    expect(await page.locator('[data-ambient-background]').evaluate((node: HTMLCanvasElement) => node.width * node.height)).toBeLessThanOrEqual(2510000)
+  }
+  await page.goto('/gallery')
+  const grid = page.locator('.gallery-grid')
+  if (!isMobile) expect((await grid.boundingBox())!.width).toBeGreaterThanOrEqual(1800)
+  const filter = page.locator('.category-filter')
+  await filter.scrollIntoViewIfNeeded()
+  const y = await filter.evaluate(node => node.getBoundingClientRect().bottom + scrollY + 500)
+  await page.evaluate(top => window.scrollTo({ top, behavior: 'instant' }), y)
+  await expect.poll(() => filter.evaluate(node => node.getBoundingClientRect().bottom)).toBeLessThanOrEqual(0)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
