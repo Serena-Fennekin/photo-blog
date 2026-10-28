@@ -37,6 +37,8 @@ test('edits public copy and publishes independent moments with revocable private
     await expect(page).toHaveURL(/\/admin\/posts\/[a-f0-9-]+/)
     const post = (await (await api.get('/api/admin/posts')).json()).find((post: any) => post.title === '小镜头的一天')
     expect(post.visibility).toBe('private')
+    const ownerPage = await api.get('/admin/posts/' + post.id)
+    expect(ownerPage.headers()['cache-control'] || '').toContain('no-store')
     const image = post.images[0].image.src
     expect((await visitor.request.get(image)).status()).toBe(404)
     expect((await visitor.request.get(`/media/${post.images[0].id}/${post.images[0].id}.original`)).status()).toBe(404)

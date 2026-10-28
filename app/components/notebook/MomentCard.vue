@@ -1,24 +1,28 @@
 <script setup lang="ts">
 import { postTopics } from '#shared/notebook'
 import type { PublicPost } from '../../../shared/types/notebook'
-const props = defineProps<{ post: PublicPost; author: string }>()
+const props = defineProps<{ post: PublicPost; author: string; readable: boolean }>()
 const emit = defineEmits<{ images: [post: PublicPost, index: number] }>()
 const root = ref<HTMLElement | null>(null), total = ref(props.post.viewCount)
 let observer: IntersectionObserver | undefined, timer: ReturnType<typeof setTimeout> | undefined
-let counted = false, disposed = false
+let counted = false, disposed = false, intersecting = false, pending = false
 const date = computed(() => new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Shanghai' }).format(new Date(props.post.publishedAt)))
-onMounted(() => {
-  observer = new IntersectionObserver(entries => {
-    clearTimeout(timer)
-    if (!entries[0]?.isIntersecting || counted) return
-    timer = setTimeout(async () => {
-      if (document.hidden || disposed) return
+function schedule() {
+  clearTimeout(timer)
+  if (!intersecting || !props.readable || counted || pending || disposed) return
+  timer = setTimeout(async () => {
+      if (document.hidden || disposed || !props.readable || !intersecting) return
+      pending = true
       try {
         const result = await $fetch<{ total: number }>(`/api/public/posts/${props.post.id}/view`, { method: 'POST' })
         if (!disposed) { total.value = result.total; counted = true; observer?.disconnect() }
       } catch { /* Reading remains available; a later visit can retry counting. */ }
+      finally { pending = false }
     }, 1000)
-  }, { threshold: 0 })
+}
+watch(() => props.readable, schedule)
+onMounted(() => {
+  observer = new IntersectionObserver(entries => { intersecting = Boolean(entries[0]?.isIntersecting); schedule() }, { threshold: 0 })
   if (root.value) observer.observe(root.value)
 })
 onBeforeUnmount(() => { disposed = true; clearTimeout(timer); observer?.disconnect() })

@@ -34,4 +34,8 @@ Privacy of every post/image API and cached responses; no gallery exposure of pos
 
 ## Completion
 
-Pending.
+Implementation complete in ac7033e (data/APIs), 7069c39 (copy/editor/feed), bacbc9a (ambient/curtain) and the final verified fix commit. Full unit/component/integration suite81/81; public desktop/mobile Playwright24/24; isolated photo+post publishing/security browser suite6/6; typecheck and production build pass after review fixes. Real screenshots inspected in both themes and mobile, with preview posts in a separate database only. Main user data was backed up before additive changes.
+
+One fresh read-only review identified admin HTML caching, failed-copy-load overwrites and concurrent first-visit cookie counts, plus observer timing under overlays. The observer issue was regraded from Minor to Important because it reproducibly counted before the About curtain cleared, contrary to the visible-reading requirement. All four received failing browser regressions then a single fix pass: private/no-store admin HTML; guarded copy loading with retry; visitor cookie established in initial public document; visibility-aware counting with timer cancellation/rearming. All suites passed afterward. Production artifact smoke also passed public/private SSR and APIs, secure cookies, blocked unattached images, daily dedup and private/no-store owner HTML.
+
+Storage remains nondestructive: removed uploads/soft-deleted media are retained and original publication time is preserved. Fresh private media requests are denied; previously downloaded public copies cannot be erased. Actual screenshots/browser tests were checked, without claiming physical-device frame-rate measurements. No deferred minor findings remain. Local preview stays on port3000; ongoing GitHub branch sync is authorized, no merge or deployment performed.
