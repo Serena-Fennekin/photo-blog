@@ -1,5 +1,6 @@
 <template>
   <div class="site-shell">
+    <SiteAmbientBackground />
     <SiteHeader />
     <main id="main-content">
       <slot />

@@ -23,7 +23,7 @@ const defaultTiming: RouteCurtainTiming = {
   reducedMotion: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   snapshot: () => {
     const clone = document.querySelector('.site-shell')?.cloneNode(true) as HTMLElement | undefined
-    clone?.querySelectorAll('.route-curtain, script, iframe').forEach(element => element.remove())
+    clone?.querySelectorAll('.route-curtain, canvas, script, iframe').forEach(element => element.remove())
     clone?.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'))
     return { html: clone?.outerHTML ?? '', scrollY: window.scrollY }
   }
@@ -48,7 +48,7 @@ export const createRouteCurtainController = (
     await timing.nextFrame()
     if (disposed) return
     state.value = 'covering'
-    if (target.value === 'gallery') await timing.wait(552)
+    if (target.value === 'gallery') await timing.wait(480)
     if (disposed) return
     state.value = 'covered'
   }
@@ -57,7 +57,7 @@ export const createRouteCurtainController = (
     await timing.nextFrame()
     if (disposed) return
     state.value = 'revealing'
-    await timing.wait(target.value === 'gallery' ? 1748 : 2900)
+    await timing.wait(target.value === 'gallery' ? 1420 : 2900)
     if (disposed) return
     state.value = 'idle'
     snapshot.value = { html: '', scrollY: 0 }

@@ -27,6 +27,7 @@ onMounted(() => {
       :disabled="!interactive"
       :data-theme-choice="choice"
       :aria-pressed="preference === choice"
+      :aria-label="labels[choice]"
       @click="setPreference(choice)"
     >
       {{ labels[choice] }}

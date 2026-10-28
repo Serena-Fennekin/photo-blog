@@ -149,3 +149,20 @@ test('holds the themed camera curtain during delayed navigation and replays with
   }
   expect(errors).toEqual([])
 })
+
+test('switches decorative backgrounds without blocking navigation and persists the visitor choice', async ({ page }) => {
+  const toggle = page.getByRole('button', { name: '背景特效', exact: true })
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
+  await page.getByRole('button', { name: '深色', exact: true }).click()
+  await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-scene', 'night')
+  await page.getByRole('button', { name: '浅色', exact: true }).click()
+  await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-scene', 'pond')
+  await toggle.click()
+  await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'false')
+  await page.reload()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await toggle.click()
+  await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
+  expect(await page.locator('[data-ambient-background]').evaluate(node => getComputedStyle(node).pointerEvents)).toBe('none')
+})
