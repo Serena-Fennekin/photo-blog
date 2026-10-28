@@ -1,8 +1,12 @@
+<script setup lang="ts">
+import { defaultSiteCopy } from '#shared/notebook'
+withDefaults(defineProps<{ quote?: string; linkLabel?: string }>(), { quote: defaultSiteCopy.homeQuote, linkLabel: defaultSiteCopy.homeLinkLabel })
+</script>
 <template>
   <section id="home-intro" class="gallery-invitation" aria-labelledby="gallery-invitation-title" data-home-motion="gallery-invitation">
     <p class="gallery-invitation__mark" aria-hidden="true" data-home-motion="gallery-mark">“</p>
-    <h1 id="gallery-invitation-title" data-home-motion="gallery-copy">有些片刻没有故事，<br>只需要被安静地记录下来。</h1>
+    <h1 id="gallery-invitation-title" data-home-motion="gallery-copy" style="white-space:pre-line;overflow-wrap:anywhere">{{ quote }}</h1>
     <div class="gallery-invitation__line" aria-hidden="true" data-home-motion="gallery-copy" />
-    <NuxtLink class="text-link text-link--large" to="/gallery" data-home-motion="gallery-copy">进入摄影集 ↗</NuxtLink>
+    <NuxtLink class="text-link text-link--large" to="/gallery" data-home-motion="gallery-copy">{{ linkLabel }} ↗</NuxtLink>
   </section>
 </template>

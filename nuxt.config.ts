@@ -2,7 +2,7 @@ export default defineNuxtConfig({
   buildDir: process.env.JOURNAL_BUILD_DIR || '.nuxt',
   devServer: { host: '127.0.0.1' },
   compatibilityDate: '2026-10-25',
-  css: ['~/assets/css/main.css', '~/assets/css/admin.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/admin.css', '~/assets/css/notebook.css'],
   devtools: { enabled: false },
   runtimeConfig: { public: { icpNumber: '' } },
   routeRules: { '/stories/**': { redirect: '/gallery' }, '/admin/stories/**': { redirect: '/admin' } },

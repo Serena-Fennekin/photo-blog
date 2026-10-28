@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const homeRoot = ref<HTMLElement | null>(null)
+const { data: copy } = await useSiteCopy()
 useHomeAnimations(homeRoot)
 
 useSeoMeta({
@@ -10,6 +11,6 @@ useSeoMeta({
 
 <template>
   <div ref="homeRoot" class="home-page" data-home-motion-root>
-    <HomeGalleryInvitation />
+    <HomeGalleryInvitation :quote="copy.homeQuote" :link-label="copy.homeLinkLabel" />
   </div>
 </template>

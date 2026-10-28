@@ -112,7 +112,8 @@ test('uploads independent photos, edits and publishes them separately, and prese
     await publicPage.keyboard.press('Escape')
     await expect(publicPage.getByRole('dialog')).toHaveCount(0)
   } finally { await visitor.close() }
-  await page.getByRole('link', { name: '首页设置', exact: true }).click()
+  await page.getByRole('link', { name: '文案设置', exact: true }).click()
+  await page.getByText('旧版精选设置（当前首页不展示）', { exact: true }).click()
   await expect(page.getByRole('radio')).toHaveCount(0)
   await page.getByRole('group', { name: '首页精选（最多6张）' }).getByLabel('独立照片A', { exact: true }).check()
   await page.getByRole('button', { name: '保存首页设置' }).click()

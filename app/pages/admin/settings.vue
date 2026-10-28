@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import type { AdminSettings } from '../../../shared/types/admin'
 import type { GalleryPhoto } from '~/types/content'
+import type { SiteCopy } from '../../../shared/types/notebook'
+import { defaultSiteCopy } from '#shared/notebook'
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 const { data } = await useFetch<AdminSettings & { photos: GalleryPhoto[] }>('/api/admin/settings')
 const message = ref(''), error = ref(''), saving = ref(false)
 const featuredIds = ref((data.value?.featuredPhotoIds ?? []).filter(id => data.value?.photos.some(photo => photo.id === id)))
+const { data: storedCopy } = await useFetch<SiteCopy>('/api/admin/site-content')
+const copy = reactive<SiteCopy>({ ...defaultSiteCopy, ...storedCopy.value })
+const copyMessage = ref(''), copyError = ref(''), copySaving = ref(false)
+async function saveCopy() {
+  copySaving.value = true; copyError.value = ''; copyMessage.value = ''
+  try { await $fetch('/api/admin/site-content', { method: 'PUT', body: copy }); copyMessage.value = '网站文案已保存，刷新前台即可查看' }
+  catch (cause: any) { copyError.value = cause.data?.statusMessage || '保存失败，请重试' }
+  finally { copySaving.value = false }
+}
 async function save() {
   error.value = ''; message.value = ''; saving.value = true
   try { await $fetch('/api/admin/settings', { method: 'PUT', body: { featuredPhotoIds: featuredIds.value } }); message.value = '首页设置已保存' }
@@ -14,7 +25,9 @@ async function save() {
 </script>
 <template>
   <section>
-    <div class="admin-heading"><div><h1>首页设置</h1><p class="admin-description">挑几张照片放在首页引言下方。摄影集仍展示全部已发布照片。</p></div></div>
+    <div class="admin-heading"><div><h1>文案设置</h1><p class="admin-description">首页的引言、关于我的介绍，都可以在这里慢慢调整。换行会保留，输入内容按纯文字展示。</p></div></div>
+    <form class="admin-form admin-copy-editor" @submit.prevent="saveCopy"><fieldset :disabled="copySaving"><legend>首页</legend><label>首页引言<textarea v-model="copy.homeQuote" rows="4" maxlength="400" required></textarea></label><label>摄影集入口文字<input v-model="copy.homeLinkLabel" maxlength="24" required></label></fieldset><fieldset :disabled="copySaving"><legend>关于我</legend><label>页面标题<input v-model="copy.aboutTitle" maxlength="40" required></label><label>个人签句<textarea v-model="copy.aboutStatement" rows="3" maxlength="200"></textarea></label><label>作者名称<input v-model="copy.authorName" maxlength="40" required></label><label>一句简介<input v-model="copy.authorTagline" maxlength="160"></label><label>关于我的介绍<textarea v-model="copy.aboutBody" rows="10" maxlength="4000"></textarea><small>空一行分段；生活动态请到“动态”栏目单独发布。</small></label></fieldset><p v-if="copyMessage" role="status" class="admin-success">{{ copyMessage }}</p><p v-if="copyError" role="alert" class="admin-error">{{ copyError }}</p><button class="admin-primary" :disabled="copySaving">{{ copySaving ? '正在保存…' : '保存网站文案' }}</button></form>
+    <details class="admin-legacy-settings"><summary>旧版精选设置（当前首页不展示）</summary>
     <form class="admin-settings admin-form" @submit.prevent="save">
       <fieldset :disabled="saving" class="admin-featured"><legend>首页精选（最多6张）</legend>
         <p class="admin-description">已选 {{ featuredIds.length }} / 6 张。未勾选时，默认展示摄影集排序最前的4张；撤回或移除的照片不会展示。</p>
@@ -29,5 +42,6 @@ async function save() {
       <p v-if="message" class="admin-success" role="status">{{ message }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
       <button class="admin-primary" :disabled="saving">{{ saving ? '正在保存…' : '保存首页设置' }}</button>
     </form>
+    </details>
   </section>
 </template>
