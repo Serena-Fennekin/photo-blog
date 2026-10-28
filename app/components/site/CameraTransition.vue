@@ -1,6 +1,10 @@
+<script setup lang="ts">
+import type { CurtainPhase } from '~/composables/useRouteCurtain'
+defineProps<{ phase: CurtainPhase }>()
+</script>
+
 <template>
-  <div class="camera-scene playing">
-    <p class="camera-message" aria-label="来了，只需稍等片刻……"><span v-for="(glyph,index) in [...'来了，只需稍等片刻……']" :key="index" class="glyph" :style="{ '--i': index }">{{ glyph }}</span></p>
+  <div class="camera-scene" :data-camera-phase="phase">
         <div class="camera-wrap">
           <span class="camera-top"></span><span class="camera-body"></span><span class="camera-grip"></span><span class="viewfinder"></span><span class="dial"></span><span class="shutter-button"></span>
           <div class="lens">
@@ -34,14 +38,12 @@
 </template>
 <style scoped>
     /* B — Camera shutter */
-    .camera-scene { display: grid; place-items: center; background: radial-gradient(circle at 50% 52%, #f2eadc 0 24%, #ddd3c2 64%, #c8bcaa 100%); }
-    .camera-message { position: absolute; z-index: 10; top: 20vh; left: 50%; display: flex; justify-content: center; width: max-content; margin: 0; overflow: visible; color: #171b18; font-family: Georgia, "Noto Serif SC", serif; font-size: clamp(44px,3.35vw,56px); font-weight: 400; line-height: 1.22; letter-spacing: -.015em; white-space: nowrap; transform: translateX(-50%); }
-    .camera-message .glyph { display: inline-block; opacity: 1; transform: translateY(0); transform-origin: 50% 100%; }
-    .camera-scene.playing .camera-message .glyph { animation: camera-message-hop 720ms cubic-bezier(.16,.84,.28,1) calc(600ms + var(--i) * 55ms) 1 both; }
-    @keyframes camera-message-hop { 0%,7%,76%,100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(-.27em) scaleY(1.025); } 48% { transform: translateY(.035em) scaleY(.978); } 63% { transform: translateY(-.018em) scaleY(1.008); } }
-    .camera-wrap { position: relative; top: clamp(32px,4.5vh,58px); width: min(64vw, 720px); aspect-ratio: 1.48; opacity: 0; transform: translateY(28px) scale(.9); }
-    .camera-scene.playing .camera-wrap { animation: camera-arrive 500ms cubic-bezier(.17,.82,.22,1) 200ms forwards; }
+    .camera-scene { display: grid; place-items: center; background: var(--color-bg); }
+    .camera-wrap { position: relative; width: min(64vw, 720px); aspect-ratio: 1.48; opacity: 0; transform: translateY(18px) scale(.96); }
+    .camera-scene:not([data-camera-phase="preparing"]) .camera-wrap { animation: camera-arrive 640ms cubic-bezier(.17,.82,.22,1) both; }
     @keyframes camera-arrive { to { opacity: 1; transform: translateY(0) scale(1); } }
+    .camera-scene[data-camera-phase="revealing"] .camera-wrap { animation: camera-dismiss 400ms cubic-bezier(.4,0,.3,1) 760ms both; }
+    @keyframes camera-dismiss { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-10px) scale(.98); } }
     .camera-body { position: absolute; z-index: 1; inset: 20% 3% 0; overflow: hidden; border: 1px solid #50544f; border-radius: 20px 20px 38px 38px; background: linear-gradient(180deg,#292e29 0%,#171b18 100%); box-shadow: none; }
     .camera-body::before { display: none; }
     .camera-body::after { position: absolute; top: 30px; right: 26px; width: 8%; aspect-ratio: 1; border: 1px solid #555a54; border-radius: 50%; background: radial-gradient(circle,#101512 0 28%,#303630 31% 54%,#0c100e 57%); content: ""; }
@@ -53,7 +55,7 @@
     .dial { position: absolute; z-index: 4; top: 13.2%; left: 20%; width: 13%; aspect-ratio: 3; border: 1px solid #5b6059; border-radius: 7px 7px 2px 2px; background: repeating-linear-gradient(90deg,#171b18 0 5px,#4a504a 5px 7px); }
     .dial::after { position: absolute; right: 7%; bottom: -8px; left: 7%; height: 8px; border-right: 1px solid #454a45; border-left: 1px solid #454a45; background: linear-gradient(180deg,#262b27,#1a1f1b); content: ""; }
     .shutter-button { position: absolute; z-index: 5; top: 16.5%; left: 8%; width: 7%; aspect-ratio: 3.1; border: 1px solid #666b65; border-radius: 999px 999px 3px 3px; background: linear-gradient(#d0d0ca,#747873 48%,#252a26 49%); box-shadow: none; transform: rotate(-2deg); transform-origin: bottom; }
-    .camera-scene.playing .shutter-button { animation: shutter-press 420ms cubic-bezier(.3,.75,.2,1) 850ms both; }
+    .camera-scene[data-camera-phase="revealing"] .shutter-button { animation: shutter-press 420ms cubic-bezier(.3,.75,.2,1) 180ms both; }
     @keyframes shutter-press { 0%,100% { transform: translateY(0) rotate(-2deg); } 32%,58% { transform: translateY(3px) rotate(-2deg) scaleY(.72); } }
     .lens { position: absolute; z-index: 4; top: 61%; left: 55%; width: 47%; aspect-ratio: 1; overflow: hidden; border: 14px solid #080b09; border-radius: 50%; background: radial-gradient(circle at 43% 37%,rgba(99,156,143,.18) 0 8%,rgba(16,45,38,.2) 27%,rgba(3,9,7,.32) 69%,rgba(0,0,0,.46) 100%); box-shadow: 0 0 0 3px #62665f,0 0 0 9px #1d221e; backdrop-filter: blur(1.2px) brightness(.82); transform: translate(-50%,-50%); }
     .lens::before { position: absolute; z-index: 4; inset: 4%; border: 1px solid rgba(255,255,255,.17); border-radius: 50%; content: ""; pointer-events: none; }
@@ -64,15 +66,19 @@
     .iris-seams { transform: rotate(-28deg); transform-box: view-box; transform-origin: 160px 160px; }
     .iris-seam { fill: none; stroke: rgba(184,192,185,.72); stroke-width: 1.65; stroke-linecap: round; }
     .iris-hole { transform: rotate(-28deg) scale(6.2); transform-box: view-box; transform-origin: 160px 160px; }
-    .camera-scene.playing .iris-seams { animation: iris-turn 500ms cubic-bezier(.56,.02,.28,1) 900ms both; }
-    .camera-scene.playing .iris-hole { animation: iris-close 500ms cubic-bezier(.56,.02,.28,1) 900ms both; }
+    .camera-scene[data-camera-phase="revealing"] .iris-seams { animation: iris-turn 500ms cubic-bezier(.56,.02,.28,1) 260ms both; }
+    .camera-scene[data-camera-phase="revealing"] .iris-hole { animation: iris-close 500ms cubic-bezier(.56,.02,.28,1) 260ms both; }
     @keyframes iris-turn { 0%,100% { transform: rotate(-28deg); } 42%,62% { transform: rotate(0); } }
     @keyframes iris-close { 0%,100% { transform: rotate(-28deg) scale(6.2); } 18% { transform: rotate(-22deg) scale(5.3); } 42%,62% { transform: rotate(0) scale(1); } 82% { transform: rotate(-28deg) scale(6.2); } }
     .lens-reflection { position: absolute; z-index: 6; top: 25%; left: 26%; width: 15%; height: 8%; border-radius: 50%; background: rgba(220,247,239,.3); transform: rotate(-28deg); filter: blur(3px); }
 
 
-.camera-scene { position:absolute; inset:0; overflow:hidden; animation:camera-pass 2300ms cubic-bezier(.66,0,.16,1) both; }
-@keyframes camera-pass { 0% {transform:translateY(102%)}24%,81% {transform:translateY(0)}100% {transform:translateY(-102%)} }
-@media(max-width:720px){ .camera-wrap{width:86vw}.camera-message{font-size:clamp(23px,5.6vw,42px);top:22vh}.lens{border-width:8px} }
-@media(max-height:720px) and (min-width:721px){ .camera-wrap{width:min(54vw,560px)}.camera-message{top:8vh;font-size:38px} }
+.camera-scene { position: absolute; inset: 0; overflow: hidden; clip-path: ellipse(0% 0% at 100% 100%); will-change: clip-path; }
+.camera-scene[data-camera-phase="covering"] { animation: camera-cover 552ms cubic-bezier(.45,0,.2,1) forwards; }
+.camera-scene[data-camera-phase="covered"] { clip-path: ellipse(150% 150% at 100% 100%); }
+.camera-scene[data-camera-phase="revealing"] { animation: camera-reveal 748ms cubic-bezier(.45,0,.2,1) 1000ms both; }
+@keyframes camera-cover { from { clip-path: ellipse(0% 0% at 100% 100%); } to { clip-path: ellipse(150% 150% at 100% 100%); } }
+@keyframes camera-reveal { from { clip-path: ellipse(150% 150% at 100% 100%); } to { clip-path: ellipse(0% 0% at 0% 0%); } }
+@media(max-width:720px){ .camera-wrap{width:86vw}.lens{border-width:8px} }
+@media(max-height:720px) and (min-width:721px){ .camera-wrap{width:min(54vw,560px)} }
 </style>

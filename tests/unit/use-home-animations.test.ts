@@ -36,15 +36,9 @@ const Harness = defineComponent({
   },
   template: `
     <main ref="root">
-      <figure v-for="photo in 2" :key="photo" data-home-motion="featured-photo" />
       <section data-home-motion="gallery-invitation">
         <p data-home-motion="gallery-mark" />
         <div data-home-motion="gallery-copy" />
-      </section>
-      <section data-home-motion="home-about">
-        <p data-home-motion="home-about-label" />
-        <p data-home-motion="home-about-copy" />
-        <a data-home-motion="home-about-link" />
       </section>
     </main>
   `
@@ -89,7 +83,7 @@ describe('useHomeAnimations', () => {
     const scrollTimelines = [...motion.timeline.mock.calls.map(([options]) => options), ...motion.from.mock.calls.map(([, options]) => options)]
       .filter(options => options?.scrollTrigger)
 
-    expect(scrollTimelines).toHaveLength(4)
+    expect(scrollTimelines).toHaveLength(1)
     for (const options of scrollTimelines) {
       expect(options.scrollTrigger).toMatchObject({
         start: 'top 78%',

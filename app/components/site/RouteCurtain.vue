@@ -4,7 +4,7 @@ const { phase, target, snapshot } = useRouteCurtain()
 
 <template>
   <div
-    class="route-curtain route-curtain--approved"
+    class="route-curtain"
     :data-state="phase"
     data-route-curtain
     :data-target="target"
@@ -12,11 +12,7 @@ const { phase, target, snapshot } = useRouteCurtain()
     @wheel.prevent
     @touchmove.prevent
   >
-    <SiteCameraTransition v-if="phase !== 'idle' && target === 'gallery'" />
+    <SiteCameraTransition v-if="phase !== 'idle' && target === 'gallery'" :phase="phase" />
     <SiteCyclistTransition v-if="phase !== 'idle' && target === 'about'" :snapshot="snapshot" :running="phase === 'revealing'" />
   </div>
 </template>
-
-<style>
-.route-curtain.route-curtain--approved { display:block; transform:none; transition:none; background:transparent; }
-</style>

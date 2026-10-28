@@ -13,7 +13,7 @@ test('browses the public journal across themes, gallery filters, photo links, an
   await page.goto('/')
   await expect(page.getByRole('heading', { name: /有些片刻没有故事/ })).toBeVisible()
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
-  await expect(page.locator('[data-featured-photo-id]')).toHaveCount(4)
+  await expect(page.locator('[data-featured-photo-id]')).toHaveCount(0)
   const curtain = page.locator('[data-route-curtain]')
   await expect(curtain).toHaveAttribute('data-state', 'idle')
 
@@ -34,8 +34,7 @@ test('browses the public journal across themes, gallery filters, photo links, an
   await expect(page.locator('[data-photo-id^="winter-"]')).toHaveCount(3)
   await expect(page.locator('[data-photo-id^="river-"]')).toHaveCount(0)
 
-  await page.goto('/')
-  await page.getByRole('link', { name: /在摄影集中查看/ }).first().click()
+  await page.goto('/gallery?photo=winter-1')
   await expect(page).toHaveURL(/\/gallery\?photo=winter-1/)
   await expect(curtain).toHaveAttribute('data-state', 'idle')
   await expect(page.locator('[data-photo-id^="winter-"]')).toHaveCount(3)
@@ -50,7 +49,9 @@ test('browses the public journal across themes, gallery filters, photo links, an
   await expect(curtain).not.toHaveAttribute('data-state', 'idle')
   await aboutNavigation
   await expect(page.getByRole('heading', { name: '关于我', level: 1 })).toBeVisible()
-  expect(await page.locator('.about-page h1').evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeLessThanOrEqual(29)
+  const aboutTitle = await page.locator('.about-page h1').evaluate(node => parseFloat(getComputedStyle(node).fontSize))
+  const aboutStatement = await page.locator('.about-page__statement').evaluate(node => parseFloat(getComputedStyle(node).fontSize))
+  expect(aboutTitle).toBeGreaterThan(aboutStatement)
   await expect(page.locator('.about-page__body')).toContainText('骑行')
   await expect(page.locator('.about-page__body')).toContainText('谢谢你')
   await expect(page.locator('.about-page__footer')).toHaveCount(0)
@@ -69,7 +70,7 @@ test('keeps all homepage content visible with reduced motion', async ({ page }) 
 
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'static')
   await expect(page.getByRole('heading', { name: /有些片刻没有故事/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '留在照片里的日子' })).toBeVisible()
+  await expect(page.locator('.home-featured, .home-about')).toHaveCount(0)
   await expect(page.getByRole('link', { name: /进入摄影集/ })).toBeVisible()
 })
 
@@ -87,31 +88,64 @@ test('keeps the enlarged navigation and category labels readable on the viewport
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
-test('opens with the quotation and shows uneven desktop photos or centered mobile photos in source order', async ({ page, isMobile }) => {
+test('keeps the homepage to its quotation and larger gallery entrance', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
   await expect(page.locator('.home-page > *').first()).toHaveClass('gallery-invitation')
   await expect(page.locator('main h1')).toHaveCount(1)
   await expect(page.locator('.home-hero')).toHaveCount(0)
-  const grid = page.locator('.home-featured__grid')
-  await expect(grid).toHaveCSS('display', isMobile ? 'block' : 'grid')
-  const cards = await page.locator('[data-featured-photo-id]').evaluateAll(elements => elements.map(element => { const r = element.getBoundingClientRect(); return { id: element.getAttribute('data-featured-photo-id'), left: r.left, right: r.right, top: r.top, width: r.width, center: (r.left + r.right) / 2 } }))
-  expect(cards).toHaveLength(4)
-  for (const card of cards) {
-    expect(card.left).toBeGreaterThanOrEqual(0)
-    expect(card.right).toBeLessThanOrEqual(page.viewportSize()!.width + 1)
-    if (isMobile) expect(Math.abs(card.center - page.viewportSize()!.width / 2)).toBeLessThan(2)
-  }
-  expect(cards.map(card => card.id)).toEqual(['winter-1', 'winter-2', 'winter-3', 'river-1'])
-  if (!isMobile) {
-    expect(cards[2]!.top - cards[0]!.top).toBeGreaterThan(90)
-    expect(cards[0]!.width).toBeGreaterThan(cards[2]!.width)
-  }
-  const text = page.locator('.home-featured__photo figcaption').first()
-  const fits = await text.evaluate(element => { element.textContent = 'W'.repeat(1500); return element.scrollWidth <= element.clientWidth + 1 })
-  expect(fits).toBe(true)
+  await expect(page.locator('.home-page > section')).toHaveCount(1)
+  await expect(page.locator('.home-featured, .home-about, .gallery-invitation__note')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /进入摄影集/ })).toHaveCSS('font-size', '20px')
   await expect(page.locator('body')).not.toContainText(/\u676d\u5dde|hang[\s_-]*zhou/i)
   await expect(page.locator('.site-footer__registration')).toHaveText('备案信息待更新')
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('places the shared footer at the document bottom on home, gallery and about', async ({ page, isMobile }) => {
+  if (!isMobile) await page.setViewportSize({ width: 1236, height: 1244 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  for (const path of ['/', '/gallery', '/about']) {
+    await page.goto(path)
+    await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
+    const geometry = await page.locator('.site-footer').evaluate(node => ({ bottom: node.getBoundingClientRect().bottom + scrollY, documentBottom: Math.max(document.documentElement.scrollHeight, innerHeight), position: getComputedStyle(node).position }))
+    expect(Math.abs(geometry.bottom - geometry.documentBottom)).toBeLessThanOrEqual(2)
+    expect(geometry.position).not.toBe('fixed')
+  }
+})
+
+test('holds the themed camera curtain during delayed navigation and replays without loading text', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  // Hold navigation after cover, long enough to expose a time-only curtain that exits prematurely.
+  await page.evaluate(() => {
+    const router = (document.querySelector('#__nuxt') as any).__vue_app__.config.globalProperties.$router
+    let first = true
+    router.beforeResolve(async (to: { path: string }) => {
+      if (to.path === '/gallery' && first) { first = false; await new Promise(resolve => setTimeout(resolve, 2700)) }
+    })
+  })
+  for (const [theme, color] of [['深色', 'rgb(20, 32, 28)'], ['浅色', 'rgb(238, 234, 224)']]) {
+    await page.getByRole('button', { name: theme }).click()
+    const navigation = page.getByRole('link', { name: /进入摄影集/ }).click()
+    const camera = page.locator('.camera-scene')
+    await expect(camera).toBeVisible()
+    await expect(camera).toHaveCSS('background-color', color)
+    await expect(camera.locator('.camera-message, .glyph')).toHaveCount(0)
+    if (theme === '深色') {
+      await expect(camera).toHaveAttribute('data-camera-phase', 'covered')
+      await page.waitForTimeout(1800)
+      await expect(camera).toHaveAttribute('data-camera-phase', 'covered')
+      await expect(camera).toHaveCSS('clip-path', 'ellipse(150% 150% at 100% 100%)')
+    }
+    await navigation
+    await expect(page).toHaveURL(/\/gallery$/)
+    await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
+    await expect(camera).toHaveCount(0)
+    await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '首页', exact: true }).click()
+  }
+  expect(errors).toEqual([])
 })
