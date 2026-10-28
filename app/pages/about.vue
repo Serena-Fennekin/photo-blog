@@ -10,17 +10,17 @@ useSeoMeta({
     <header class="about-page__header">
       <p class="about-page__index">ABOUT / 关于</p>
       <h1>关于我</h1>
-      <p class="about-page__statement">我拍下的不是远方，<br>而是日常短暂显露出的形状。</p>
+      <p class="about-page__statement">喜欢散步，<br>也喜欢随手拍照。</p>
     </header>
 
     <div class="about-page__body">
-      <p>生活在杭州。常常沿着江边、旧街和山路行走，等待光线让熟悉的地方变得陌生一点。</p>
-      <p>这里是一册持续生长的个人摄影日志。照片按时间与感受被整理，文字只保留当时最短的一句。</p>
-      <p>如果一张照片让你停了一会儿，它就已经完成了自己的事情。</p>
+      <p>路边的花草、偶遇的猫狗、平常的风景，看到喜欢的就拍下来。</p>
+      <p>这里是我的个人相册，偶尔也会留下几句随笔。</p>
+      <p>谢谢你过来看看。</p>
     </div>
 
     <footer class="about-page__footer">
-      <span>HANGZHOU, CHINA</span>
+      <span>慢慢积攒的日常</span>
       <NuxtLink class="text-link" to="/gallery">看摄影集</NuxtLink>
     </footer>
   </article>

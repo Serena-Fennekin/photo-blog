@@ -79,3 +79,8 @@
 .admin-photo-preview>img { display:block; width:100%; max-height:65vh; object-fit:contain; background:var(--color-surface); }
 .admin-photo-preview .exif-panel { margin-top:2rem; }
 @media(max-width:800px){.admin-single-photo{grid-template-columns:1fr;gap:2rem}.admin-library-controls{align-items:stretch}.admin-photo-library{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
+.admin-featured-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(13rem,1fr)); gap:1rem; }
+.admin-featured-option { display:flex !important; align-items:center; gap:.7rem; padding:.75rem; border:1px solid var(--color-line); border-radius:.5rem; overflow-wrap:anywhere; }
+.admin-featured-option input { width:auto; flex-shrink:0; }
+.admin-featured-option img { width:4rem; height:4rem; object-fit:cover; border-radius:.25rem; }
+.admin-featured-option span { min-width:0; }

@@ -33,21 +33,15 @@ export const useHomeAnimations = (root: Ref<HTMLElement | null>): void => {
         .from('[data-home-motion="hero-copy"]', { opacity: 0, y: narrow ? 18 : 32, duration: 0.72 })
         .from('[data-home-motion="hero-image"]', { opacity: 0, scale: narrow ? 0.99 : 0.965, duration: 0.95 }, '-=0.46')
 
-      root.value?.querySelectorAll<HTMLElement>('[data-home-motion="chapter"]').forEach((chapter) => {
-        const timeline = gsap.timeline({
-          defaults: { ease: 'power2.out' },
+      root.value?.querySelectorAll<HTMLElement>('[data-home-motion="featured-photo"]').forEach((photo) => {
+        gsap.from(photo, {
+          opacity: 0, y: lift, duration: 1, ease: 'power2.out',
           scrollTrigger: {
-            trigger: chapter,
+            trigger: photo,
             start: 'top 78%',
             toggleActions: 'play reverse play reverse'
           }
         })
-
-        timeline
-          .from(chapter.querySelector('[data-home-motion="chapter-date"]'), { opacity: 0, x: -distance, duration: 0.72 })
-          .from(chapter.querySelector('[data-home-motion="chapter-copy"]'), { opacity: 0, x: distance, duration: 0.78 }, '-=0.5')
-          .from(chapter.querySelector('[data-home-motion="chapter-primary-photo"]'), { opacity: 0, y: lift, scale: narrow ? 0.985 : 0.96, duration: 0.9 }, '-=0.48')
-          .from(chapter.querySelectorAll('[data-home-motion="chapter-secondary-photo"]'), { opacity: 0, y: lift, scale: narrow ? 0.99 : 0.97, duration: 0.82, stagger: 0.12 }, '-=0.6')
       })
 
       const galleryInvitation = root.value?.querySelector<HTMLElement>('[data-home-motion="gallery-invitation"]')

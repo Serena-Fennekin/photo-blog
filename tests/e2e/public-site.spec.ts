@@ -11,9 +11,9 @@ test('browses the public journal across themes, gallery filters, photo links, an
   // Allow cold development chunk compilation plus three intentional route curtains.
   test.setTimeout(60_000)
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /看见喜欢的，\s*就拍下来。/ })).toBeVisible()
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'animated')
-  await expect(page.locator('[data-home-motion="chapter-date"]')).toHaveCount(5)
+  await expect(page.locator('[data-featured-photo-id]')).toHaveCount(4)
   const curtain = page.locator('[data-route-curtain]')
   await expect(curtain).toHaveAttribute('data-state', 'idle')
 
@@ -64,8 +64,8 @@ test('keeps all homepage content visible with reduced motion', async ({ page }) 
   await page.goto('/')
 
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode', 'static')
-  await expect(page.getByRole('heading', { name: '日常，经过光之后' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '山风越过枯草。' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /看见喜欢的，\s*就拍下来。/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '随手挑了几张' })).toBeVisible()
   await expect(page.getByRole('link', { name: /进入摄影集/ })).toBeVisible()
 })
 
@@ -81,20 +81,25 @@ test('keeps the enlarged navigation and category labels readable on the viewport
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
-test('wraps long independent photo metadata instead of clipping it', async ({ page }) => {
+test('places the invitation second and centers finite featured photos on mobile, with two columns on desktop', async ({ page, isMobile }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
-  const moment = page.locator('.photo-moment').first()
-  const widths = await moment.evaluate(element => {
-    return ['h2', '.photo-moment__location', '.photo-moment__note'].map(selector => {
-      const text = element.querySelector<HTMLElement>(selector)!
-      text.textContent = 'W'.repeat(selector === '.photo-moment__note' ? 1500 : 120)
-      return { content: text.scrollWidth, available: text.clientWidth, right: text.getBoundingClientRect().right, viewport: innerWidth }
-    })
-  })
-  for (const width of widths) {
-    expect(width.content, 'valid metadata must wrap inside its text column').toBeLessThanOrEqual(width.available + 1)
-    expect(width.right).toBeLessThanOrEqual(width.viewport + 1)
+  await expect(page.locator('.home-page > *').nth(1)).toHaveClass('gallery-invitation')
+  const grid = page.locator('.home-featured__grid')
+  await expect(grid).toHaveCSS('column-count', isMobile ? '1' : '2')
+  const cards = await page.locator('[data-featured-photo-id]').evaluateAll(elements => elements.map(element => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, center: (r.left + r.right) / 2 } }))
+  expect(cards).toHaveLength(4)
+  for (const card of cards) {
+    expect(card.left).toBeGreaterThanOrEqual(0)
+    expect(card.right).toBeLessThanOrEqual(page.viewportSize()!.width + 1)
+    if (isMobile) expect(Math.abs(card.center - page.viewportSize()!.width / 2)).toBeLessThan(2)
   }
+  if (!isMobile) expect(new Set(cards.map(card => Math.round(card.left))).size).toBe(2)
+  const text = page.locator('.home-featured__photo figcaption').first()
+  const fits = await text.evaluate(element => { element.textContent = 'W'.repeat(1500); return element.scrollWidth <= element.clientWidth + 1 })
+  expect(fits).toBe(true)
+  await expect(page.locator('body')).not.toContainText(/\u676d\u5dde|hang[\s_-]*zhou/i)
+  await expect(page.locator('.home-hero img')).toHaveCSS('object-fit', 'contain')
+  await expect(page.locator('.home-hero img')).toHaveCSS('border-top-left-radius', '0px')
 })

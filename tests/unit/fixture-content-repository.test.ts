@@ -3,7 +3,7 @@ import { createFixtureContentRepository } from '../../server/repositories/fixtur
 describe('flat fixture repository', () => {
   it('returns independently published homepage photos', async () => {
     const photos = await createFixtureContentRepository().listHomePhotos(10)
-    expect(photos.map(photo => photo.id)).toEqual(['winter-1', 'winter-2', 'winter-3', 'river-1', 'river-2'])
+    expect(photos.map(photo => photo.id)).toEqual(['winter-1', 'winter-2', 'winter-3', 'river-1'])
     expect(JSON.stringify(photos)).not.toMatch(/storyId|storySlug|coverPhotoId/)
   })
   it('paginates without repeating the cursor photo', async () => {

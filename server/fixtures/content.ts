@@ -34,7 +34,7 @@ export const fixturePhotos: (GalleryPhoto & { status: 'published' | 'draft' })[]
     "viewCount": 0,
     "title": "山风越过枯草。",
     "capturedOn": "2025-12-16",
-    "location": "杭州 · 临安",
+    "location": "山路",
     "note": "光从云后落下来，山坡忽然有了呼吸。",
     "categories": [
       {
@@ -66,7 +66,7 @@ export const fixturePhotos: (GalleryPhoto & { status: 'published' | 'draft' })[]
     "viewCount": 0,
     "title": "云层短暂地打开。",
     "capturedOn": "2025-12-16",
-    "location": "杭州 · 临安",
+    "location": "山路",
     "note": "光从云后落下来，山坡忽然有了呼吸。",
     "categories": [
       {
@@ -98,7 +98,7 @@ export const fixturePhotos: (GalleryPhoto & { status: 'published' | 'draft' })[]
     "viewCount": 0,
     "title": "雪线把远处留成一小段白。",
     "capturedOn": "2025-12-16",
-    "location": "杭州 · 临安",
+    "location": "山路",
     "note": "光从云后落下来，山坡忽然有了呼吸。",
     "categories": [
       {
@@ -130,7 +130,7 @@ export const fixturePhotos: (GalleryPhoto & { status: 'published' | 'draft' })[]
     "viewCount": 0,
     "title": "傍晚的人群从光里经过。",
     "capturedOn": "2025-02-07",
-    "location": "杭州 · 钱塘江",
+    "location": "江边",
     "note": "没有目的地，只是跟着傍晚慢慢向前。",
     "categories": [
       {
@@ -162,7 +162,7 @@ export const fixturePhotos: (GalleryPhoto & { status: 'published' | 'draft' })[]
     "viewCount": 0,
     "title": "水面留下最后一点橙色。",
     "capturedOn": "2025-02-07",
-    "location": "杭州 · 钱塘江",
+    "location": "江边",
     "note": "没有目的地，只是跟着傍晚慢慢向前。",
     "categories": [
       {

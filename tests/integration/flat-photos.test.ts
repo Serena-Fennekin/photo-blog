@@ -105,7 +105,7 @@ describe('legacy photo migration', () => {
       CREATE TABLE photo_view_totals(photo_id TEXT PRIMARY KEY,total INTEGER); INSERT INTO photo_view_totals VALUES('old-a',7);`)
     legacy.prepare('INSERT INTO settings VALUES(1,?)').run(JSON.stringify({ heroMode: 'manual', heroPhotoId: 'old-a', lastValidHeroPhoto: null }))
     for (const [id, status] of [['published', 'published'], ['draft', 'draft'], ['deleted', 'deleted'], ['failed', 'published'], ['missing-cover', 'published']]) {
-      legacy.prepare('INSERT INTO stories VALUES(?,?,?)').run(id, id, JSON.stringify({ id, coverPhotoId: id === 'published' ? 'old-a' : id === 'missing-cover' ? 'absent' : id, title: '原有标题', capturedOn: '2026-08-19', location: '杭州', note: '原有随笔', categorySlugs: ['nature'], status, updatedAt: '2026-10-27T00:00:00Z' }))
+      legacy.prepare('INSERT INTO stories VALUES(?,?,?)').run(id, id, JSON.stringify({ id, coverPhotoId: id === 'published' ? 'old-a' : id === 'missing-cover' ? 'absent' : id, title: '原有标题', capturedOn: '2026-08-19', location: '旧街', note: '原有随笔', categorySlugs: ['nature'], status, updatedAt: '2026-10-27T00:00:00Z' }))
       const photo = asset(id === 'published' ? 'old-a' : id)
       legacy.prepare('INSERT INTO photos VALUES(?,?,?,?)').run(photo.id, id, 0, JSON.stringify({ ...photo, status: id === 'failed' ? 'failed' : 'ready', caption: '原有说明' }))
     }
@@ -113,7 +113,7 @@ describe('legacy photo migration', () => {
     legacy.close()
     const migrated = new JournalStore(path, false)
     stores.push(migrated)
-    expect(migrated.getPhoto('old-a')).toMatchObject({ title: '原有标题', caption: '原有说明', note: '原有随笔', location: '杭州', status: 'published', originalKey: 'old-a.original', exif: { capturedAt: '2026-08-19T12:37:12+08:00' } })
+    expect(migrated.getPhoto('old-a')).toMatchObject({ title: '原有标题', caption: '原有说明', note: '原有随笔', location: '旧街', status: 'published', originalKey: 'old-a.original', exif: { capturedAt: '2026-08-19T12:37:12+08:00' } })
     expect(migrated.publicPhotos().map(photo => photo.id)).toEqual(['old-a'])
     expect(migrated.getPhoto('failed')).toMatchObject({ processingStatus: 'failed', status: 'draft' })
     expect(migrated.getPhoto('hidden-ready')?.status).toBe('draft')

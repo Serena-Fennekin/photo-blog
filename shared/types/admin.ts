@@ -6,6 +6,7 @@ export type PhotoAsset = {
   image?: PublicImage
   exif: PublicExif
   originalKey?: string
+  contentHash?: string
   error?: string
 }
 export type AdminPhoto = PhotoAsset & {
@@ -21,4 +22,5 @@ export type AdminPhoto = PhotoAsset & {
   publishedAt?: string
 }
 export type AdminCategory = { slug: string; name: string; active: boolean; position: number }
-export type AdminSettings = { heroMode: 'manual' | 'latest'; heroPhotoId: string | null }
+export type AdminSettings = { heroMode: 'manual' | 'latest'; heroPhotoId: string | null; featuredPhotoIds?: string[] }
+export type BulkPhotoResult = { photos: AdminPhoto[]; alreadyPublished: number }

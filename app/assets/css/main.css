@@ -48,7 +48,7 @@ body {
   min-height: 100vh;
 }
 
-.home-hero__empty { display:grid; place-items:center; min-height:58vh; color:var(--color-muted); border:1px solid var(--color-line); font-family:Georgia,'Noto Serif SC',serif; font-size:1.15rem; letter-spacing:.12em; }
+.home-hero__empty { display:grid; place-items:center; height:100%; color:var(--color-muted); font-size:1.15rem; }
 
 .route-curtain {
   position: fixed;
@@ -235,129 +235,63 @@ h1 {
 }
 
 .home-hero {
-  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(20rem, 1.2fr);
-  align-items: center;
-  min-height: calc(100vh - 4.5rem);
-  gap: clamp(2rem, 6vw, 8rem);
-  padding: clamp(3rem, 7vw, 8rem) clamp(1rem, 6vw, 7rem);
-}
-
-.home-hero::before {
-  position: absolute;
-  z-index: -1;
-  top: 10%;
-  right: 10%;
-  width: min(48vw, 42rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-  content: "";
-  filter: blur(60px);
+  grid-template-rows: auto minmax(0, 1fr);
+  height: calc(100svh - 4.5rem);
+  min-height: 36rem;
+  gap: 1.75rem;
+  padding: 2rem clamp(1.25rem, 6vw, 7rem) 1.5rem;
 }
 
 .home-hero__copy {
-  z-index: 2;
-  max-width: 36rem;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  width: min(100%, 64rem);
+  margin-inline: auto;
 }
 
 .home-hero h1 {
-  max-width: 7ch;
-  font-size: clamp(3.4rem, 8.5vw, 9rem);
-  line-height: 0.93;
-  letter-spacing: -0.055em;
+  margin: 0;
+  font-size: clamp(2.5rem, 3.8vw, 4rem);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
 }
 
 .home-hero__lede {
-  max-width: 28rem;
-  margin: 2rem 0 0;
+  margin: 0 0 0.3rem;
   color: var(--color-muted);
-  font-family: Georgia, "Noto Serif SC", serif;
-  font-size: clamp(1rem, 1.5vw, 1.28rem);
-  line-height: 1.9;
+  font-size: 0.95rem;
+  line-height: 1.85;
 }
 
 .home-hero__frame {
-  position: relative;
-  width: min(100%, 44rem);
-  margin: 0;
-  justify-self: end;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  width: min(100%, 64rem);
+  margin: 0 auto;
 }
 
+.home-hero__photo-link { display: block; min-height: 0; }
 .home-hero__frame img {
   display: block;
   width: 100%;
-  height: min(72vh, 52rem);
-  border-radius: 50% 50% 1rem 1rem;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
 }
 
-.home-hero__frame figcaption,
-.photo-moment figcaption {
+.home-hero__frame figcaption {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 0.8rem;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 0.9rem;
   color: var(--color-muted);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   letter-spacing: 0.04em;
 }
 
-.home-hero__index {
-  position: absolute;
-  right: 1.4rem;
-  bottom: 2rem;
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  writing-mode: vertical-rl;
-}
-
-.home-page__chapters {
-  padding: 0 clamp(1rem, 4vw, 4rem);
-}
-
-.photo-moment {
-  padding: clamp(5rem, 11vw, 11rem) 0;
-  border-top: 1px solid var(--color-line);
-}
-
-.photo-moment__header {
-  display: grid;
-  grid-template-columns: minmax(10rem, 0.55fr) minmax(18rem, 1fr);
-  gap: 4rem;
-  max-width: 78rem;
-  margin: 0 auto clamp(3rem, 7vw, 7rem);
-}
-
-.photo-moment__date {
-  margin: 0;
-  font-family: Georgia, serif;
-  font-size: clamp(2.5rem, 6vw, 6rem);
-  letter-spacing: -0.06em;
-  line-height: 0.9;
-}
-
-.photo-moment__location {
-  margin-top: 1.2rem;
-  color: var(--color-muted);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-}
-
-.photo-moment__copy {
-  max-width: 38rem;
-  padding-top: 0.25rem;
-}
-
-.photo-moment__header > div {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.photo-moment__copy h2,
 .gallery-invitation h2 {
   margin: 0.8rem 0 1.6rem;
   font-family: Georgia, "Noto Serif SC", serif;
@@ -365,12 +299,6 @@ h1 {
   font-weight: 400;
   letter-spacing: -0.04em;
   line-height: 1.1;
-}
-
-.photo-moment__note {
-  max-width: 32rem;
-  color: var(--color-muted);
-  line-height: 1.9;
 }
 
 .text-link {
@@ -382,24 +310,22 @@ h1 {
   font-size: 0.82rem;
 }
 
-.photo-moment__photo {
-  width: min(100%, 72rem);
-  margin: 0;
-}
-.photo-moment__photo img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 78vh;
-  background: var(--color-surface);
-  object-fit: contain;
-  object-position: left center;
-}
+.home-featured { max-width: 78rem; margin: 0 auto; padding: 5rem clamp(1.25rem, 5vw, 5rem); }
+.home-featured__heading { margin-bottom: 3rem; }
+.home-featured__heading h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.75rem); font-weight: 400; }
+.home-featured__heading p { color: var(--color-muted); line-height: 1.8; }
+.home-featured__grid { columns: 2; column-gap: clamp(2rem, 5vw, 5rem); }
+.home-featured__photo { display: inline-block; width: 100%; margin: 0 0 clamp(2rem, 5vw, 5rem); break-inside: avoid; vertical-align: top; }
+.home-featured__photo a, .home-featured__photo img { display: block; width: 100%; }
+.home-featured__photo img { height: auto; }
+.home-featured__photo figcaption { margin-top: 0.9rem; color: var(--color-muted); font-size: 0.95rem; line-height: 1.8; overflow-wrap: anywhere; }
+.home-featured > .text-link { display: table; margin-inline: auto; }
 
 .gallery-invitation {
   position: relative;
   display: grid;
-  min-height: 82vh;
+  min-height: calc(100svh - 4.5rem);
+  scroll-margin-top: 4.5rem;
   place-content: center;
   padding: 6rem 1.5rem;
   border-block: 1px solid var(--color-line);
@@ -843,28 +769,18 @@ h1 {
   }
 
   .home-hero {
-    grid-template-columns: 1fr;
-    min-height: auto;
-    padding-block: 4rem 7rem;
+    min-height: 36rem;
+    gap: 1.5rem;
+    padding-block: 1.75rem 1.25rem;
   }
 
   .home-hero__copy {
-    order: 2;
+    display: block;
   }
-
-  .home-hero__frame {
-    order: 1;
-  }
-
-  .home-hero__frame img {
-    height: 62vh;
-  }
-
-  .home-hero__index {
-    display: none;
-  }
-
-  .photo-moment__header,
+  .home-hero h1 { font-size: clamp(2rem, 7vw, 3rem); }
+  .home-hero__lede { margin-top: 1rem; font-size: 0.85rem; }
+  .home-featured__grid { columns: 1; max-width: 32rem; margin-inline: auto; }
+  .home-featured__heading { max-width: 32rem; margin-inline: auto; }
   .home-about {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -872,7 +788,7 @@ h1 {
 
 
   .gallery-invitation {
-    min-height: 68vh;
+    min-height: calc(100svh - 4.5rem);
   }
 
   .gallery-heading {

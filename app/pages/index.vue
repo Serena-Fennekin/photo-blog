@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HomePageModel } from '../../server/services/public-content-service'
+import FeaturedPhotos from '~/components/home/FeaturedPhotos.vue'
 
 const { data: home } = await useAsyncData('home-page', () => $fetch<HomePageModel>('/api/public/home'))
 const homeRoot = ref<HTMLElement | null>(null)
@@ -8,8 +9,8 @@ useHomeAnimations(homeRoot)
 if (!home.value) throw createError({ statusCode: 503, statusMessage: '网站暂不可用，请稍后重试' })
 
 useSeoMeta({
-  title: 'PHOTO JOURNAL — 光与时间的记录',
-  description: '一册关于城市、山野与日常光线的个人摄影日志。'
+  title: 'PHOTO JOURNAL — 随手拍下的日常',
+  description: '花草、小动物，还有散步时看到的风景。一个放日常照片的小相册。'
 })
 </script>
 
@@ -19,17 +20,13 @@ useSeoMeta({
       <HomeHero :photo="home.settings.heroPhoto" />
     </div>
 
-    <section class="home-page__chapters" aria-label="最近照片">
-      <div v-for="photo in home.photos" :key="photo.id" data-home-motion="chapter">
-        <HomePhotoMoment :photo="photo" />
-      </div>
-    </section>
-
     <HomeGalleryInvitation />
 
+    <FeaturedPhotos :photos="home.photos" />
+
     <section class="home-about" data-home-motion="home-about">
-      <p class="eyebrow" data-home-motion="home-about-label">BEHIND THE CAMERA</p>
-      <p data-home-motion="home-about-copy">拍照是我与时间相处的方式。这里没有宏大的主题，只有反复经过的街道、天气与人。</p>
+      <p class="eyebrow" data-home-motion="home-about-label">拍照的人</p>
+      <p data-home-motion="home-about-copy">平时喜欢拍拍花草、小动物，也拍些散步时看到的风景。这里放的，就是这些小记录。</p>
       <NuxtLink class="text-link" to="/about" data-home-motion="home-about-link">了解更多 ↗</NuxtLink>
     </section>
   </div>

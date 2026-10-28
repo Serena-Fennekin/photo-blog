@@ -8,6 +8,7 @@ const motion = vi.hoisted(() => ({
   context: vi.fn(),
   registerPlugin: vi.fn(),
   timeline: vi.fn(),
+  from: vi.fn(),
   revert: vi.fn(),
   scrollTriggerPlugin: { name: 'ScrollTrigger' }
 }))
@@ -16,7 +17,8 @@ vi.mock('gsap', () => ({
   gsap: {
     context: motion.context,
     registerPlugin: motion.registerPlugin,
-    timeline: motion.timeline
+    timeline: motion.timeline,
+    from: motion.from
   }
 }))
 
@@ -38,12 +40,7 @@ const Harness = defineComponent({
         <p data-home-motion="hero-copy">内容始终可见</p>
         <figure data-home-motion="hero-image" />
       </section>
-      <section v-for="chapter in 2" :key="chapter" data-home-motion="chapter">
-        <p data-home-motion="chapter-date" />
-        <div data-home-motion="chapter-copy" />
-        <figure data-home-motion="chapter-primary-photo" />
-        <figure data-home-motion="chapter-secondary-photo" />
-      </section>
+      <figure v-for="photo in 2" :key="photo" data-home-motion="featured-photo" />
       <section data-home-motion="gallery-invitation">
         <p data-home-motion="gallery-mark" />
         <div data-home-motion="gallery-copy" />
@@ -63,6 +60,7 @@ describe('useHomeAnimations', () => {
     motion.context.mockReset()
     motion.registerPlugin.mockReset()
     motion.timeline.mockReset()
+    motion.from.mockReset()
     motion.revert.mockReset()
   })
 
@@ -92,10 +90,7 @@ describe('useHomeAnimations', () => {
     expect(motion.registerPlugin).toHaveBeenCalledOnce()
     expect(motion.registerPlugin).toHaveBeenCalledWith(motion.scrollTriggerPlugin)
     expect(motion.context).toHaveBeenCalledOnce()
-    expect(motion.timeline).toHaveBeenCalledTimes(5)
-
-    const scrollTimelines = motion.timeline.mock.calls
-      .map(([options]) => options)
+    const scrollTimelines = [...motion.timeline.mock.calls.map(([options]) => options), ...motion.from.mock.calls.map(([, options]) => options)]
       .filter(options => options?.scrollTrigger)
 
     expect(scrollTimelines).toHaveLength(4)

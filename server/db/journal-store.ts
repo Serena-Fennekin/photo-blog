@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { fixtureCategories, fixturePhotos, fixtureSettings } from '../fixtures/content'
 import { sanitizeExif } from '../media/exif-policy'
 import { migrateFlatPhotos } from './migrate-flat-photos'
+import { upgradePhotoMetadata } from './upgrade-photo-metadata'
+import { DuplicatePhotoError } from '../media/photo-identity'
 import type { GalleryPhoto, PublicSettings } from '../../app/types/content'
 import type { AdminCategory, AdminPhoto, AdminSettings, PhotoAsset } from '../../shared/types/admin'
 
@@ -18,7 +20,7 @@ const updateSchema = z.object({
 
 export class JournalStore {
   readonly db: DatabaseSync
-  constructor(path: string, seed = true) {
+  constructor(path: string, seed = true, originals?: string) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })
     this.db = new DatabaseSync(path)
     try {
@@ -33,7 +35,8 @@ export class JournalStore {
         'CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,admin_id TEXT NOT NULL REFERENCES admins(id),expires_at INTEGER NOT NULL);',
         'CREATE TABLE IF NOT EXISTS photo_view_totals(photo_id TEXT PRIMARY KEY,total INTEGER NOT NULL DEFAULT 0);',
         'CREATE TABLE IF NOT EXISTS photo_view_dedup(key TEXT PRIMARY KEY,expires_at INTEGER NOT NULL);',
-        'CREATE INDEX IF NOT EXISTS view_expiry ON photo_view_dedup(expires_at);'
+        'CREATE INDEX IF NOT EXISTS view_expiry ON photo_view_dedup(expires_at);',
+        "CREATE INDEX IF NOT EXISTS photo_content_hash ON photos(json_extract(payload,'$.contentHash'));"
       ].join('\n'))
       if (!this.db.prepare("SELECT 1 FROM metadata WHERE key='initialized'").get()) this.transaction(() => {
         this.db.prepare('INSERT INTO settings VALUES(1,?)').run(JSON.stringify({ heroMode: 'manual', heroPhotoId: seed ? fixtureSettings.heroPhoto?.id : null, lastValidHeroPhoto: null }))
@@ -44,6 +47,7 @@ export class JournalStore {
         }
         this.db.prepare("INSERT INTO metadata VALUES('initialized','1')").run()
       })
+      upgradePhotoMetadata(this.db, originals)
     } catch (error) { this.db.close(); throw error }
   }
   transaction<T>(action: () => T): T {
@@ -63,10 +67,16 @@ export class JournalStore {
   createPhoto(asset: PhotoAsset): AdminPhoto {
     return this.transaction(() => {
       if (this.getPhoto(asset.id)) throw new Error('照片已存在')
+      const duplicate = asset.contentHash ? this.findDuplicate(asset.contentHash) : null
+      if (duplicate) throw new DuplicatePhotoError(duplicate)
       const position = Number((this.db.prepare('SELECT coalesce(min(position),0)-1 AS position FROM photos').get() as { position: number }).position)
       const photo: AdminPhoto = { ...asset, title: (asset.image?.alt ?? '').slice(0, 120), capturedOn: asset.exif.capturedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10), location: '', note: '', caption: '', categorySlugs: [], status: 'draft', position, updatedAt: new Date().toISOString() }
       this.writePhoto(photo); return photo
     })
+  }
+  findDuplicate(hash: string, excludeId = '', publishedOnly = false): AdminPhoto | null {
+    const row = this.db.prepare("SELECT payload FROM photos WHERE json_extract(payload,'$.contentHash')=? AND id!=? AND json_extract(payload,'$.status')!='deleted' AND json_extract(payload,'$.processingStatus')='ready' AND (?=0 OR json_extract(payload,'$.status')='published') ORDER BY position,id LIMIT 1").get(hash, excludeId, publishedOnly ? 1 : 0) as { payload: string } | undefined
+    return row ? JSON.parse(row.payload) : null
   }
   private updateOne(id: string, input: unknown): AdminPhoto {
     const photo = this.getPhoto(id)
@@ -75,6 +85,11 @@ export class JournalStore {
     if (change.categorySlugs?.some(slug => !this.listCategories().some(category => category.slug === slug))) throw new Error('分类不存在')
     if (change.status === 'published' && (photo.processingStatus !== 'ready' || !photo.image)) throw new Error('照片处理完成后才能发布')
     const wasPublished = photo.status === 'published'
+    if (wasPublished && change.status === 'published' && Object.keys(change).length === 1 && alt === undefined) return photo
+    if (!wasPublished && change.status === 'published' && photo.contentHash) {
+      const duplicate = this.findDuplicate(photo.contentHash, id, true)
+      if (duplicate) throw new DuplicatePhotoError(duplicate, '已有相同照片发布，无需重复发布')
+    }
     Object.assign(photo, change, { updatedAt: new Date().toISOString() })
     if (alt !== undefined && photo.image) photo.image.alt = alt
     if (photo.status === 'published' && !wasPublished) photo.publishedAt = photo.updatedAt
@@ -89,6 +104,8 @@ export class JournalStore {
     return this.transaction(() => {
       const photo = this.getPhoto(id)
       if (!photo || photo.status === 'deleted' || asset.id !== id) throw new Error('照片不存在')
+      const duplicate = asset.contentHash ? this.findDuplicate(asset.contentHash, id) : null
+      if (duplicate) throw new DuplicatePhotoError(duplicate)
       const result = { ...photo, ...asset, ...(asset.image ? { image: { ...asset.image, alt: photo.image?.alt ?? asset.image.alt } } : {}), updatedAt: new Date().toISOString() }
       if (asset.processingStatus === 'ready') delete result.error
       else result.status = 'draft'
@@ -123,13 +140,19 @@ export class JournalStore {
     return JSON.parse((this.db.prepare('SELECT payload FROM settings WHERE id=1').get() as { payload: string }).payload)
   }
   updateSettings(input: unknown) {
-    const change = z.object({ heroMode: z.enum(['manual', 'latest']), heroPhotoId: z.string().nullable().optional() }).strict().parse(input)
+    const change = z.object({ heroMode: z.enum(['manual', 'latest']), heroPhotoId: z.string().nullable().optional(), featuredPhotoIds: z.array(z.string()).max(6).refine(ids => new Set(ids).size === ids.length).optional() }).strict().parse(input)
     return this.transaction(() => {
       const settings = { ...this.getSettings(), ...change }
       if (settings.heroMode === 'manual' && settings.heroPhotoId && !this.publicPhotos().some(photo => photo.id === settings.heroPhotoId)) throw new Error('请选择已发布的照片作为首页主图')
+      if (change.featuredPhotoIds?.some(id => !this.publicPhotos().some(photo => photo.id === id))) throw new Error('首页精选只能选择已发布的照片，请刷新后重新选择')
       this.db.prepare('UPDATE settings SET payload=? WHERE id=1').run(JSON.stringify(settings))
       return settings
     })
+  }
+  featuredPhotos(limit: number): GalleryPhoto[] {
+    const photos = this.publicPhotos(), ids = this.getSettings().featuredPhotoIds ?? []
+    const selected = ids.length ? ids.map(id => photos.find(photo => photo.id === id)).filter((photo): photo is GalleryPhoto => Boolean(photo)) : photos.slice(0, 4)
+    return selected.slice(0, Math.max(0, Math.min(6, limit)))
   }
   publicSettings(): PublicSettings {
     const settings = this.getSettings(), photos = this.publicPhotos()
@@ -152,4 +175,4 @@ export class JournalStore {
   }
 }
 let store: JournalStore | undefined
-export const getJournalStore = () => store ??= new JournalStore(resolve(process.env.JOURNAL_DATA_DIR || 'data', 'journal.sqlite'), process.env.JOURNAL_SEED !== 'false')
+export const getJournalStore = () => store ??= new JournalStore(resolve(process.env.JOURNAL_DATA_DIR || 'data', 'journal.sqlite'), process.env.JOURNAL_SEED !== 'false', resolve(process.env.JOURNAL_MEDIA_DIR || 'storage', 'private'))

@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from '../../auth/password'
 import { createSessionToken, revokeSession } from '../../auth/session'
 import { limitRequests, localSetupAllowed } from '../../auth/request-policy'
 import { mediaRoot, processLocalPhoto } from '../../media/local-media-provider'
+import { photoHash, DuplicatePhotoError } from '../../media/photo-identity'
 
 let processing = false
 const loginSchema = z.object({ username: z.string().trim().min(1).max(60), password: z.string().min(1).max(128) })
@@ -43,7 +44,8 @@ export default defineEventHandler(async event => {
       if (!id && method === 'GET') return store.listPhotos()
       if (id === 'bulk' && method === 'POST') {
         const body = z.object({ ids: z.array(z.string()).min(1).max(1000), changes: z.record(z.string(), z.unknown()) }).strict().parse(await readBody(event))
-        return store.updatePhotos(body.ids, body.changes)
+        const alreadyPublished = body.changes.status === 'published' ? body.ids.filter(id => store.getPhoto(id)?.status === 'published').length : 0
+        return { photos: store.updatePhotos(body.ids, body.changes), alreadyPublished }
       }
       if (id === 'order' && method === 'PUT') {
         const body = z.object({ ids: z.array(z.string()).max(100000) }).strict().parse(await readBody(event))
@@ -82,6 +84,8 @@ export default defineEventHandler(async event => {
             data = Buffer.concat(chunks)
             filename = decodeURIComponent(getHeader(event, 'x-file-name') || filename).slice(0, 300)
           }
+          const duplicate = store.findDuplicate(photoHash(data), existing?.id)
+          if (duplicate) throw new DuplicatePhotoError(duplicate)
           const asset = await processLocalPhoto(data, photoId, filename)
           return existing ? store.replaceAsset(photoId, asset) : store.createPhoto(asset)
         } catch (error) {
@@ -103,6 +107,7 @@ export default defineEventHandler(async event => {
     }
     throw createError({ statusCode: 404, statusMessage: '接口不存在' })
   } catch (error) {
+    if (error instanceof DuplicatePhotoError) throw createError({ statusCode: 409, statusMessage: error.message, data: { duplicate: true, existingPhoto: error.existingPhoto } })
     if (error instanceof ZodError) throw createError({ statusCode: 400, statusMessage: '填写内容格式不正确', data: error.flatten() })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     const message = error instanceof Error ? error.message : '操作失败'

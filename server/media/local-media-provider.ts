@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 import sharp from 'sharp'
 import exifr from 'exifr'
 import { sanitizeExif } from './exif-policy'
+import { photoHash } from './photo-identity'
 import type { PhotoAsset } from '../../shared/types/admin'
 
 sharp.concurrency(1)
@@ -25,5 +26,5 @@ export async function processLocalPhoto(input: Buffer, id: string, filename: str
   }
   const exif = await exifr.parse(input, { reviveValues: false, pick: ['Make', 'Model', 'LensModel', 'FocalLength', 'FNumber', 'ISO', 'ExposureTime', 'DateTimeOriginal', 'OffsetTimeOriginal', 'OffsetTime'] }).catch(() => null)
   const rotated = (metadata.orientation ?? 1) >= 5
-  return { id, processingStatus: 'ready', originalKey: `${id}.original`, exif: sanitizeExif(exif ?? {}), image: { src: `/media/${id}/1280.webp`, srcset: [...new Map(variants.map(value => [value.split(' ').at(-1), value])).values()].join(', '), width: rotated ? metadata.height : metadata.width, height: rotated ? metadata.width : metadata.height, alt: filename.replace(/\.[^.]+$/, '').slice(0, 300) } }
+  return { id, processingStatus: 'ready', contentHash: photoHash(input), originalKey: `${id}.original`, exif: sanitizeExif(exif ?? {}), image: { src: `/media/${id}/1280.webp`, srcset: [...new Map(variants.map(value => [value.split(' ').at(-1), value])).values()].join(', '), width: rotated ? metadata.height : metadata.width, height: rotated ? metadata.width : metadata.height, alt: filename.replace(/\.[^.]+$/, '').slice(0, 300) } }
 }
