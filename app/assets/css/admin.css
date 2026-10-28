@@ -89,3 +89,6 @@
 .admin-photo-status[data-status="draft"] { color:#7b5924; background:#f3ead9; }
 html[data-theme="dark"] .admin-photo-status[data-status="published"] { color:#b5d5be; background:#233a2e; }
 html[data-theme="dark"] .admin-photo-status[data-status="draft"] { color:#edcf92; background:#443521; }
+.admin-photo-card:focus-visible { outline:2px solid var(--color-accent); outline-offset:4px; }
+.admin-sort-instructions { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); clip-path:inset(50%); white-space:nowrap; border:0; }
+.admin-live-empty { margin:0; padding:0; height:0; overflow:hidden; }
