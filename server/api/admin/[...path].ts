@@ -8,6 +8,7 @@ import { createSessionToken, revokeSession } from '../../auth/session'
 import { limitRequests, localSetupAllowed } from '../../auth/request-policy'
 import { mediaRoot, processLocalPhoto } from '../../media/local-media-provider'
 import { photoHash, DuplicatePhotoError } from '../../media/photo-identity'
+import { getNotebookStore } from '../../utils/notebook'
 
 let processing = false
 const loginSchema = z.object({ username: z.string().trim().min(1).max(60), password: z.string().min(1).max(128) })
@@ -16,6 +17,38 @@ export default defineEventHandler(async event => {
   const method = event.method, store = getJournalStore()
   setHeader(event, 'Cache-Control', 'no-store')
   try {
+    if (path[0] === 'site-content') {
+      if (method === 'GET') return getNotebookStore().getCopy()
+      if (method === 'PUT') return getNotebookStore().saveCopy(await readBody(event))
+    }
+    if (path[0] === 'posts') {
+      const notebook = getNotebookStore(), id = path[1]
+      if (!id && method === 'GET') return notebook.listAdminPosts()
+      if (!id && method === 'POST') return notebook.savePost(null, await readBody(event))
+      if (id && path.length === 2) {
+        if (!notebook.getPost(id)) throw createError({ statusCode: 404, statusMessage: '动态不存在' })
+        if (method === 'GET') return notebook.getPost(id)
+        if (method === 'PUT') return notebook.savePost(id, await readBody(event))
+        if (method === 'DELETE') return notebook.deletePost(id)
+      }
+    }
+    if (path[0] === 'post-media' && path.length === 1 && method === 'POST') {
+      limitRequests(event, 'post-upload', 40)
+      if (processing) throw createError({ statusCode: 429, statusMessage: '正在处理图片，请稍后重试' })
+      if (Number(getHeader(event, 'content-length')) > 25 * 1024 * 1024) throw createError({ statusCode: 413, statusMessage: '图片最大25MB' })
+      processing = true
+      try {
+        const chunks: Buffer[] = []; let size = 0
+        for await (const chunk of event.node.req) {
+          const part = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+          size += part.length
+          if (size > 25 * 1024 * 1024) throw createError({ statusCode: 413, statusMessage: '图片最大25MB' })
+          chunks.push(part)
+        }
+        const filename = decodeURIComponent(getHeader(event, 'x-file-name') || '配图.jpg').slice(0, 300)
+        return getNotebookStore().addAsset(await processLocalPhoto(Buffer.concat(chunks), randomUUID(), filename))
+      } finally { processing = false }
+    }
     if (path[0] === 'auth') {
       const initialized = Boolean(store.db.prepare('SELECT id FROM admins LIMIT 1').get())
       if (path[1] === 'state' && method === 'GET') return { initialized, canSetup: !initialized && localSetupAllowed(event) }
