@@ -102,4 +102,9 @@ test('places the invitation second and centers finite featured photos on mobile,
   await expect(page.locator('body')).not.toContainText(/\u676d\u5dde|hang[\s_-]*zhou/i)
   await expect(page.locator('.home-hero img')).toHaveCSS('object-fit', 'contain')
   await expect(page.locator('.home-hero img')).toHaveCSS('border-top-left-radius', '0px')
+  if (isMobile) {
+    const caption = await page.locator('.home-hero figcaption').boundingBox()
+    const navigation = await page.getByRole('navigation', { name: '主导航' }).boundingBox()
+    expect(caption!.y + caption!.height, 'hero caption must stay above the floating navigation').toBeLessThan(navigation!.y)
+  }
 })

@@ -771,7 +771,7 @@ h1 {
   .home-hero {
     min-height: 36rem;
     gap: 1.5rem;
-    padding-block: 1.75rem 1.25rem;
+    padding-block: 1.75rem 6rem;
   }
 
   .home-hero__copy {
