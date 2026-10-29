@@ -136,12 +136,13 @@ test('uploads independent photos, edits and publishes them separately, and prese
   expect((await page.request.get('/api/admin/photos')).status()).toBe(401)
 })
 
-test('public navigation uses approved camera and cyclist transitions and clears narrow viewports', async ({ page }) => {
+test('public navigation uses the iris and cyclist transitions and clears narrow viewports', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true')
   await page.getByRole('link', { name: '摄影集', exact: true }).click()
   await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-target', 'gallery')
-  await expect(page.locator('.camera-scene')).toBeVisible()
+  await expect(page.locator('.aperture-scene')).toBeVisible()
+  await expect(page.locator('.camera-scene')).toHaveCount(0)
   await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('link', { name: '关于我', exact: true }).click()

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import sharp from 'sharp'
 import { routeFixtureImages } from './helpers/fixture-images'
 
 test.beforeEach(async ({ page }) => {
@@ -115,12 +116,12 @@ test('places the shared footer at the document bottom on home, gallery and about
   }
 })
 
-test('keeps ambient motion and navigation visible while the compact camera reveals usable photographs', async ({ page }) => {
+test('opens the gallery from a closed iris below navigation while ambient motion continues', async ({ page }) => {
   test.setTimeout(60_000)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  // A slow route must leave the current page and navigation usable instead of painting an opaque screen.
+  // Keep the iris closed until the destination is ready, then reveal the photographs progressively.
   await page.evaluate(() => {
     const router = (document.querySelector('#__nuxt') as any).__vue_app__.config.globalProperties.$router
     let first = true
@@ -131,29 +132,38 @@ test('keeps ambient motion and navigation visible while the compact camera revea
   for (const theme of ['深色', '浅色']) {
     await page.getByRole('button', { name: theme }).click()
     const navigation = page.getByRole('link', { name: /进入摄影集/ }).click()
-    const camera = page.locator('.camera-scene')
-    await expect(camera).toBeVisible()
-    await expect(camera).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    const iris = page.locator('.aperture-scene')
+    await expect(iris).toBeVisible()
+    const faceBrightness = await iris.locator('.iris-metal-face').evaluate(node => (getComputedStyle(node).stopColor.match(/[\d.]+/g) ?? []).slice(0, 3).reduce((sum, value) => sum + Number(value), 0))
+    if (theme === '深色') expect(faceBrightness).toBeLessThan(220)
+    else expect(faceBrightness).toBeGreaterThan(600)
+    await expect(page.locator('.camera-scene')).toHaveCount(0)
     await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
     const header = page.locator('.site-header'), curtain = page.locator('[data-route-curtain]')
     expect((await curtain.boundingBox())!.y).toBeGreaterThanOrEqual((await header.boundingBox())!.height)
     await expect(curtain).toHaveCSS('pointer-events', 'none')
-    await expect(camera.locator('.camera-message, .glyph')).toHaveCount(0)
     if (theme === '深色') {
-      await expect(camera).toHaveAttribute('data-camera-phase', 'covered')
+      await expect(iris).toHaveAttribute('data-aperture-phase', 'covered')
       await page.waitForTimeout(1800)
-      await expect(camera).toHaveAttribute('data-camera-phase', 'covered')
-      await expect(page.getByRole('heading', { name: /有些片刻没有故事/ })).toBeVisible()
+      await expect(iris).toHaveAttribute('data-aperture-phase', 'covered')
+      const painted = await sharp(await iris.screenshot()).removeAlpha().raw().toBuffer({ resolveWithObject: true })
+      const shades = [.15, .45, .8].flatMap(x => [.15, .45, .8].map(y => painted.data[(Math.floor(y * painted.info.height) * painted.info.width + Math.floor(x * painted.info.width)) * painted.info.channels]!))
+      expect(Math.max(...shades) - Math.min(...shades)).toBeGreaterThan(4)
+      if (process.env.IRIS_VISUAL) await page.screenshot({ path: '.superpowers/iris-preview/live-closed.png' })
     }
     await navigation
     await expect(page).toHaveURL(/\/gallery$/)
-    await expect(camera).toHaveAttribute('data-camera-phase', 'revealing')
+    await expect(iris).toHaveAttribute('data-aperture-phase', 'revealing')
+    if (process.env.IRIS_VISUAL) {
+      await iris.evaluate(node => node.getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = 380 }))
+      await page.screenshot({ path: `.superpowers/iris-preview/live-${theme}-380.png` })
+    }
     await expect(page.getByRole('heading', { name: '摄影集', exact: true })).toBeVisible()
     await page.locator('[data-photo-id="winter-1"]').click()
     await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
     await page.getByRole('button', { name: /关闭/ }).click()
     await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
-    await expect(camera).toHaveCount(0)
+    await expect(iris).toHaveCount(0)
     await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '首页', exact: true }).click()
   }
   await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '关于我', exact: true }).click()
@@ -162,6 +172,75 @@ test('keeps ambient motion and navigation visible while the compact camera revea
   await expect(page.locator('.cycling-ambient')).toBeVisible()
   await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
   expect(errors).toEqual([])
+})
+
+test('iris blades cover without a central hole and fully clear wide, square and portrait views', async ({ page }) => {
+  test.setTimeout(60_000)
+  // A retained DOM specimen allows exact CSS-frame checks without extending the real router timer.
+  await page.evaluate(() => {
+    new MutationObserver((_records, observer) => {
+      const scene = document.querySelector('.aperture-scene')
+      if (!scene) return
+      const probe = document.createElement('div')
+      probe.id = 'iris-geometry-probe'; probe.setAttribute('aria-hidden', 'true')
+      probe.style.cssText = 'position:fixed;inset:72px 0 0;pointer-events:none;z-index:2000'
+      const specimen = scene.cloneNode(true) as HTMLElement
+      const ids = new Map<string, string>()
+      specimen.querySelectorAll('[id]').forEach(element => { const old = element.id; ids.set(`url(#${old})`, `url(#${old}-probe)`); element.id = `${old}-probe` })
+      specimen.querySelectorAll('[fill],[clip-path]').forEach(element => {
+        for (const attribute of ['fill', 'clip-path']) {
+          const value = element.getAttribute(attribute)
+          if (value && ids.has(value)) element.setAttribute(attribute, ids.get(value)!)
+        }
+      })
+      specimen.setAttribute('data-aperture-phase', 'revealing')
+      probe.append(specimen); document.body.append(probe); observer.disconnect()
+    }).observe(document.body, { childList: true, subtree: true })
+  })
+  await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '摄影集', exact: true }).click()
+  const probe = page.locator('#iris-geometry-probe')
+  await expect(probe).toBeAttached()
+  try {
+    for (const viewport of [{ width: 2560, height: 1440 }, { width: 1000, height: 1000 }, { width: 393, height: 852 }]) {
+      await page.setViewportSize(viewport)
+      const coverage = await probe.evaluate(node => {
+        const svg = node.querySelector('svg')!, leaves = [...node.querySelectorAll<SVGPathElement>('.iris-leaf')]
+        const windows = [...node.querySelectorAll<SVGPathElement>('.iris-window')], cap = node.querySelector<SVGCircleElement>('.iris-tipcap')
+        const animations = node.getAnimations({ subtree: true }); animations.forEach(animation => animation.pause())
+        const bounds = node.getBoundingClientRect()
+        const inside = (leaf: SVGGeometryElement, x: number, y: number) => {
+          const point = svg.createSVGPoint(); point.x = bounds.left + bounds.width * x; point.y = bounds.top + bounds.height * y
+          return leaf.isPointInFill(point.matrixTransform(leaf.getScreenCTM()!.inverse()))
+        }
+        const covered = (x: number, y: number) => Boolean(cap && Number(getComputedStyle(cap).opacity) > .5 && inside(cap, x, y)) || leaves.some((leaf, index) => inside(leaf, x, y) && (!windows[index] || inside(windows[index]!, x, y)))
+        const sample = (time: number) => {
+          animations.forEach(animation => { animation.currentTime = time })
+          const points = [.01, .25, .5, .75, .99].flatMap(x => [.01, .25, .5, .75, .99].map(y => covered(x, y)))
+          return { center: covered(.5, .5), covered: points.filter(Boolean).length }
+        }
+        const closed = sample(0)
+        animations.forEach(animation => { animation.currentTime = 180 })
+        const rim = Array.from({ length: 72 }, (_, index) => covered(.5 + Math.cos(index * Math.PI / 36) * .46, .5 + Math.sin(index * Math.PI / 36) * .46))
+        return { closed, rim, middle: sample(550), open: sample(1100) }
+      })
+      expect(coverage.closed).toEqual({ center: true, covered: 25 })
+      expect(coverage.rim.every(Boolean)).toBe(true)
+      expect(coverage.middle.center).toBe(false)
+      expect(coverage.middle.covered).toBeGreaterThan(0)
+      expect(coverage.middle.covered).toBeLessThan(25)
+      expect(coverage.open).toEqual({ center: false, covered: 0 })
+    }
+    if (process.env.IRIS_VISUAL) {
+      await page.setViewportSize({ width: 1280, height: 900 })
+      for (const theme of ['浅色', '深色']) {
+        await page.getByRole('button', { name: theme, exact: true }).click()
+        for (const time of [0, 380, 700, 1100]) {
+          await probe.evaluate((node, frame) => node.getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = frame }), time)
+          await page.screenshot({ path: `.superpowers/iris-preview/${theme}-${time}.png` })
+        }
+      }
+    }
+  } finally { await probe.evaluate(node => node.remove()) }
 })
 
 test('switches decorative backgrounds without blocking navigation and persists the visitor choice', async ({ page }) => {
