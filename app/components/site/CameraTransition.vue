@@ -5,6 +5,7 @@ defineProps<{ phase: CurtainPhase }>()
 
 <template>
   <div class="camera-scene" :data-camera-phase="phase">
+      <div class="camera-exit">
         <div class="camera-wrap">
           <span class="camera-top"></span><span class="camera-body"></span><span class="camera-grip"></span><span class="viewfinder"></span><span class="dial"></span><span class="shutter-button"></span>
           <div class="lens">
@@ -34,15 +35,16 @@ defineProps<{ phase: CurtainPhase }>()
             <span class="lens-reflection"></span>
           </div>
         </div>
+      </div>
   </div>
 </template>
 <style scoped>
     /* B — Camera shutter */
-    .camera-scene { display: grid; place-items: center; background: var(--color-bg); }
-    .camera-wrap { position: relative; width: min(64vw, 720px); aspect-ratio: 1.48; opacity: 0; transform: translateY(18px) scale(.96); }
-    .camera-scene:not([data-camera-phase="preparing"]) .camera-wrap { animation: camera-arrive 560ms cubic-bezier(.17,.82,.22,1) both; }
+    .camera-scene { display: grid; place-items: center; background: transparent; pointer-events:none; }
+    .camera-exit { width:min(42vw,360px); aspect-ratio:1.48; }
+    .camera-wrap { position: relative; width:100%; aspect-ratio: 1.48; opacity: 0; transform: translateY(14px) scale(.96); animation:camera-arrive 340ms cubic-bezier(.17,.82,.22,1) both; }
     @keyframes camera-arrive { to { opacity: 1; transform: translateY(0) scale(1); } }
-    .camera-scene[data-camera-phase="revealing"] .camera-wrap { animation: camera-dismiss 360ms cubic-bezier(.4,0,.3,1) 580ms both; }
+    .camera-scene[data-camera-phase="revealing"] .camera-exit { animation: camera-dismiss 400ms cubic-bezier(.4,0,.3,1) 650ms both; }
     @keyframes camera-dismiss { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-10px) scale(.98); } }
     .camera-body { position: absolute; z-index: 1; inset: 20% 3% 0; overflow: hidden; border: 1px solid #50544f; border-radius: 20px 20px 38px 38px; background: linear-gradient(180deg,#292e29 0%,#171b18 100%); box-shadow: none; }
     .camera-body::before { display: none; }
@@ -73,12 +75,6 @@ defineProps<{ phase: CurtainPhase }>()
     .lens-reflection { position: absolute; z-index: 6; top: 25%; left: 26%; width: 15%; height: 8%; border-radius: 50%; background: rgba(220,247,239,.3); transform: rotate(-28deg); filter: blur(3px); }
 
 
-.camera-scene { position: absolute; inset: 0; overflow: hidden; clip-path: ellipse(0% 0% at 100% 100%); will-change: clip-path; }
-.camera-scene[data-camera-phase="covering"] { animation: camera-cover 480ms cubic-bezier(.45,0,.2,1) forwards; }
-.camera-scene[data-camera-phase="covered"] { clip-path: ellipse(150% 150% at 100% 100%); }
-.camera-scene[data-camera-phase="revealing"] { animation: camera-reveal 720ms cubic-bezier(.4,0,.18,1) 700ms both; }
-@keyframes camera-cover { from { clip-path: ellipse(0% 0% at 100% 100%); } to { clip-path: ellipse(150% 150% at 100% 100%); } }
-@keyframes camera-reveal { from { clip-path: ellipse(150% 150% at 100% 100%); } to { clip-path: ellipse(0% 0% at 0% 0%); } }
-@media(max-width:720px){ .camera-wrap{width:86vw}.lens{border-width:8px} }
-@media(max-height:720px) and (min-width:721px){ .camera-wrap{width:min(54vw,560px)} }
+.camera-scene { position: absolute; inset: 0; overflow: hidden; }
+@media(max-width:720px){ .camera-exit{width:min(66vw,270px)}.lens{border-width:8px} }
 </style>

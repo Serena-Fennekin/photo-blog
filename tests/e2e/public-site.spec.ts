@@ -115,12 +115,12 @@ test('places the shared footer at the document bottom on home, gallery and about
   }
 })
 
-test('holds the themed camera curtain during delayed navigation and replays without loading text', async ({ page }) => {
+test('keeps ambient motion and navigation visible while the compact camera reveals usable photographs', async ({ page }) => {
   test.setTimeout(60_000)
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  // Hold navigation after cover, long enough to expose a time-only curtain that exits prematurely.
+  // A slow route must leave the current page and navigation usable instead of painting an opaque screen.
   await page.evaluate(() => {
     const router = (document.querySelector('#__nuxt') as any).__vue_app__.config.globalProperties.$router
     let first = true
@@ -128,25 +128,39 @@ test('holds the themed camera curtain during delayed navigation and replays with
       if (to.path === '/gallery' && first) { first = false; await new Promise(resolve => setTimeout(resolve, 2700)) }
     })
   })
-  for (const [theme, color] of [['深色', 'rgb(20, 32, 28)'], ['浅色', 'rgb(238, 234, 224)']]) {
+  for (const theme of ['深色', '浅色']) {
     await page.getByRole('button', { name: theme }).click()
     const navigation = page.getByRole('link', { name: /进入摄影集/ }).click()
     const camera = page.locator('.camera-scene')
     await expect(camera).toBeVisible()
-    await expect(camera).toHaveCSS('background-color', color)
+    await expect(camera).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
+    const header = page.locator('.site-header'), curtain = page.locator('[data-route-curtain]')
+    expect((await curtain.boundingBox())!.y).toBeGreaterThanOrEqual((await header.boundingBox())!.height)
+    await expect(curtain).toHaveCSS('pointer-events', 'none')
     await expect(camera.locator('.camera-message, .glyph')).toHaveCount(0)
     if (theme === '深色') {
       await expect(camera).toHaveAttribute('data-camera-phase', 'covered')
       await page.waitForTimeout(1800)
       await expect(camera).toHaveAttribute('data-camera-phase', 'covered')
-      await expect(camera).toHaveCSS('clip-path', 'ellipse(150% 150% at 100% 100%)')
+      await expect(page.getByRole('heading', { name: /有些片刻没有故事/ })).toBeVisible()
     }
     await navigation
     await expect(page).toHaveURL(/\/gallery$/)
+    await expect(camera).toHaveAttribute('data-camera-phase', 'revealing')
+    await expect(page.getByRole('heading', { name: '摄影集', exact: true })).toBeVisible()
+    await page.locator('[data-photo-id="winter-1"]').click()
+    await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
+    await page.getByRole('button', { name: /关闭/ }).click()
     await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
     await expect(camera).toHaveCount(0)
     await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '首页', exact: true }).click()
   }
+  await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '关于我', exact: true }).click()
+  await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'revealing')
+  await expect(page.locator('[data-ambient-background]')).toHaveAttribute('data-running', 'true')
+  await expect(page.locator('.cycling-ambient')).toBeVisible()
+  await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
   expect(errors).toEqual([])
 })
 

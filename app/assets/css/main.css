@@ -1,13 +1,13 @@
 :root {
   color-scheme: light;
-  --color-bg: #eeeae0;
-  --color-surface: #f7f3e9;
-  --color-elevated: #fffdf7;
-  --color-text: #1b2722;
-  --color-muted: #67726c;
-  --color-line: rgba(27, 39, 34, 0.18);
-  --color-accent: #b96139;
-  --header-bg: rgba(238, 234, 224, 0.84);
+  --color-bg: #e5eeeb;
+  --color-surface: #f1f6f3;
+  --color-elevated: #f9fcfa;
+  --color-text: #203b35;
+  --color-muted: #526d66;
+  --color-line: rgba(32, 59, 53, 0.15);
+  --color-accent: #875f73;
+  --header-bg: rgba(229, 238, 235, 0.2);
   font-family: Inter, "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
 }
 
@@ -20,7 +20,7 @@
   --color-muted: #a8b2aa;
   --color-line: rgba(240, 238, 231, 0.17);
   --color-accent: #d38a5a;
-  --header-bg: rgba(20, 32, 28, 0.84);
+  --header-bg: rgba(20, 32, 28, 0.26);
 }
 
 html:has(.home-page) {
@@ -74,6 +74,9 @@ body {
   pointer-events: auto;
 }
 
+.route-curtain[data-target="gallery"] { pointer-events:none; }
+.site-shell:has(.photo-lightbox, dialog[open]) .route-curtain[data-target="gallery"] { visibility:hidden; }
+
 a {
   color: inherit;
 }
@@ -100,7 +103,7 @@ a:focus-visible {
   padding: 0.75rem clamp(1rem, 3vw, 3rem);
   border-bottom: 1px solid var(--color-line);
   background: var(--header-bg);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(8px);
 }
 
 .site-brand {
@@ -219,21 +222,19 @@ h1 {
   min-height: calc(100svh - 4.5rem);
   scroll-margin-top: 4.5rem;
   place-content: center;
-  padding: 6rem 1.5rem;
+  padding: clamp(2.5rem,7vh,6rem) 1.5rem;
   border-bottom: 1px solid var(--color-line);
   text-align: center;
 }
 
 .gallery-invitation__mark {
-  position: absolute;
-  top: 8%;
-  left: 50%;
-  margin: 0;
+  position: relative;
+  justify-self: center;
+  margin: 0 0 .4rem;
   color: color-mix(in srgb, var(--color-accent) 34%, transparent);
   font-family: Georgia, serif;
-  font-size: clamp(8rem, 26vw, 24rem);
-  line-height: 1;
-  transform: translateX(-50%);
+  font-size: clamp(5rem, 11vw, 10rem);
+  line-height: .65;
 }
 
 .gallery-invitation h1 {
@@ -241,6 +242,9 @@ h1 {
   max-width: 100%;
   margin-inline: auto;
 }
+.home-quote-line { display:block; }
+.home-glyph-mask { display:inline-block; overflow:clip; vertical-align:top; padding-block:.08em; margin-block:-.08em; }
+.home-glyph { display:inline-block; white-space:pre; }
 
 .gallery-invitation__line {
   width: 5rem;
@@ -601,7 +605,7 @@ h1 {
     padding: 0.85rem 1rem;
     border: 1px solid var(--color-line);
     border-radius: 999px;
-    background: var(--header-bg);
+    background: color-mix(in srgb,var(--color-bg) 88%,transparent);
     backdrop-filter: blur(18px);
   }
 

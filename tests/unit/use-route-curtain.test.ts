@@ -5,7 +5,7 @@ import {
   isCurtainTarget
 } from '../../app/composables/useRouteCurtain'
 
-type RouteHook = (to: { path: string }, from: { path: string }) => void | Promise<void>
+type RouteHook = (to: { path: string }, from: { path: string }, failure?: unknown) => void | Promise<void>
 
 const deferred = () => {
   let resolve!: () => void
@@ -33,7 +33,7 @@ const createRouter = () => {
       })
     },
     before: (path: string, fromPath = '/') => beforeHook({ path }, { path: fromPath }),
-    after: (path: string, fromPath = '/') => afterHook({ path }, { path: fromPath }),
+    after: (path: string, fromPath = '/', failure?: unknown) => afterHook({ path }, { path: fromPath }, failure),
     removeBefore,
     removeAfter
   }
@@ -50,40 +50,77 @@ describe('route curtain targets', () => {
 })
 
 describe('createRouteCurtainController', () => {
-  it('covers the viewport before target navigation continues, then reveals and resets', async () => {
+  it('lets gallery navigation continue immediately and runs its short signature over the destination', async () => {
     const fake = createRouter()
-    const cover = deferred()
     const reveal = deferred()
-    const wait = vi.fn()
-      .mockImplementationOnce(() => cover.promise)
-      .mockImplementationOnce(() => reveal.promise)
+    const wait = vi.fn(() => reveal.promise)
     const controller = createRouteCurtainController(fake.router, {
       nextFrame: () => Promise.resolve(),
       wait,
       reducedMotion: () => false
     })
 
-    let continued = false
-    const navigation = Promise.resolve(fake.before('/gallery')).then(() => {
-      continued = true
-    })
+    const navigation = fake.before('/gallery')
     await Promise.resolve()
-
-    expect(controller.phase.value).toBe('covering')
-    expect(continued).toBe(false)
-    expect(wait).toHaveBeenNthCalledWith(1, 480)
-
-    cover.resolve()
+    expect(wait).not.toHaveBeenCalled()
     await navigation
     expect(controller.phase.value).toBe('covered')
 
     const afterNavigation = Promise.resolve(fake.after('/gallery'))
     await Promise.resolve()
     expect(controller.phase.value).toBe('revealing')
-    expect(wait).toHaveBeenNthCalledWith(2, 1420)
+    expect(wait).toHaveBeenCalledWith(1100)
 
     reveal.resolve()
     await afterNavigation
+    expect(controller.phase.value).toBe('idle')
+  })
+
+  it('allows another destination immediately and ignores the earlier animation completion', async () => {
+    const fake = createRouter(), oldReveal = deferred(), newReveal = deferred()
+    const controller = createRouteCurtainController(fake.router, {
+      nextFrame: () => Promise.resolve(),
+      wait: vi.fn().mockImplementationOnce(() => oldReveal.promise).mockImplementationOnce(() => newReveal.promise),
+      reducedMotion: () => false
+    })
+    await fake.before('/gallery')
+    const first = fake.after('/gallery')
+    await Promise.resolve()
+    const second = fake.before('/about', '/gallery')
+    await Promise.resolve()
+    expect(controller.target.value).toBe('about')
+    expect(controller.phase.value).toBe('covered')
+    await second
+    const after = fake.after('/about', '/gallery')
+    await Promise.resolve()
+    oldReveal.resolve(); await first
+    expect(controller.target.value).toBe('about')
+    expect(controller.phase.value).toBe('revealing')
+    newReveal.resolve(); await after
+    expect(controller.phase.value).toBe('idle')
+  })
+
+  it('clears failed navigation and lets a non-target navigation dismiss the signature', async () => {
+    const fake = createRouter(), reveal = deferred()
+    const controller = createRouteCurtainController(fake.router, { nextFrame: () => Promise.resolve(), wait: () => reveal.promise, reducedMotion: () => false })
+    await fake.before('/gallery')
+    await fake.after('/gallery', '/', new Error('navigation aborted'))
+    expect(controller.phase.value).toBe('idle')
+    await fake.before('/gallery')
+    const after = fake.after('/gallery'); await Promise.resolve()
+    await fake.before('/', '/gallery')
+    expect(controller.phase.value).toBe('idle')
+    reveal.resolve(); await after
+    expect(controller.phase.value).toBe('idle')
+  })
+
+  it('dismisses pending artwork when the visitor returns to the still-active page', async () => {
+    const fake = createRouter()
+    const controller = createRouteCurtainController(fake.router, { nextFrame: () => Promise.resolve(), wait: () => Promise.resolve(), reducedMotion: () => false })
+    await fake.before('/gallery')
+    await fake.after('/', '/', new Error('duplicated current route'))
+    expect(controller.phase.value).toBe('idle')
+    await fake.after('/gallery', '/', new Error('cancelled pending route'))
     expect(controller.phase.value).toBe('idle')
   })
 

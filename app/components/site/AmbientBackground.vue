@@ -12,7 +12,7 @@ onMounted(() => {
     const wasRunning = running.value
     scene.value = document.documentElement.dataset.theme === 'dark' ? 'night' : 'pond'
     renderer.setTheme(scene.value)
-    const blocked = Boolean(document.querySelector('.photo-lightbox, dialog[open], [data-route-curtain]:not([data-state="idle"])'))
+    const blocked = Boolean(document.querySelector('.photo-lightbox, dialog[open]'))
     running.value = enabled.value && !document.hidden && !motion.matches && !blocked
     if (running.value) {
       if (!wasRunning) nextTick(() => { if (canvas.value && running.value) renderer.resize() })

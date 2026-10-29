@@ -3,7 +3,7 @@ import { onScopeDispose, readonly, ref, type Ref } from 'vue'
 export type CurtainPhase = 'idle' | 'preparing' | 'covering' | 'covered' | 'revealing'
 
 type CurtainRoute = { path: string }
-type CurtainHook = (to: CurtainRoute, from: CurtainRoute) => void | Promise<void>
+type CurtainHook = (to: CurtainRoute, from: CurtainRoute, failure?: unknown) => void | Promise<void>
 
 interface CurtainRouter {
   beforeEach: (hook: CurtainHook) => () => void
@@ -39,52 +39,39 @@ export const createRouteCurtainController = (
   const target = ref<'gallery' | 'about' | null>(null)
   const snapshot = ref({ html: '', scrollY: 0 })
   let disposed = false
-  let targetNavigationPending = false
-  let coverPromise: Promise<void> | undefined
-  let revealPromise: Promise<void> | undefined
-
-  const cover = async () => {
-    state.value = 'preparing'
-    await timing.nextFrame()
-    if (disposed) return
-    state.value = 'covering'
-    if (target.value === 'gallery') await timing.wait(480)
-    if (disposed) return
-    state.value = 'covered'
-  }
-
-  const reveal = async () => {
-    await timing.nextFrame()
-    if (disposed) return
-    state.value = 'revealing'
-    await timing.wait(target.value === 'gallery' ? 1420 : 2900)
-    if (disposed) return
+  let generation = 0, pendingPath: string | undefined
+  const reset = () => {
+    generation++
+    pendingPath = undefined
     state.value = 'idle'
+    target.value = null
     snapshot.value = { html: '', scrollY: 0 }
   }
 
-  const removeBefore = router.beforeEach(async (to, from) => {
-    if (!isCurtainTarget(to.path) || to.path === from.path || from.path.startsWith('/admin') || timing.reducedMotion()) return
-
-    if (revealPromise) await revealPromise
+  const removeBefore = router.beforeEach((to, from) => {
     if (disposed) return
-
-    targetNavigationPending = true
+    if (to.path === from.path) return
+    reset()
+    if (!isCurtainTarget(to.path) || from.path.startsWith('/admin') || timing.reducedMotion()) return
+    pendingPath = to.path
     target.value = to.path === '/gallery' ? 'gallery' : 'about'
     snapshot.value = target.value === 'about' ? timing.snapshot?.() ?? { html: '', scrollY: 0 } : { html: '', scrollY: 0 }
-    coverPromise ??= cover()
-    await coverPromise
+    // Signature artwork accompanies navigation; it never adds an artificial route delay.
+    state.value = 'covered'
   })
 
-  const removeAfter = router.afterEach(async () => {
-    if (!targetNavigationPending || state.value !== 'covered' || disposed) return
-
-    targetNavigationPending = false
-    revealPromise = reveal().finally(() => {
-      coverPromise = undefined
-      revealPromise = undefined
-    })
-    await revealPromise
+  const removeAfter = router.afterEach(async (to, from, failure) => {
+    if (disposed) return
+    if (failure && to.path === from.path) { reset(); return }
+    if (to.path !== pendingPath || to.path === from.path) return
+    if (failure) { reset(); return }
+    pendingPath = undefined
+    const current = generation, duration = target.value === 'gallery' ? 1100 : 2900
+    await timing.nextFrame()
+    if (disposed || current !== generation) return
+    state.value = 'revealing'
+    await timing.wait(duration)
+    if (!disposed && current === generation) reset()
   })
 
   return {
@@ -93,7 +80,7 @@ export const createRouteCurtainController = (
     snapshot: readonly(snapshot),
     dispose: () => {
       disposed = true
-      state.value = 'idle'
+      reset()
       removeBefore()
       removeAfter()
     }

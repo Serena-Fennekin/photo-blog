@@ -2,10 +2,11 @@
 import artwork from '~/assets/artwork/cyclist.svg?raw'
 import { cyclingFrame, legPose } from '~/utils/cycling-geometry'
 const props = defineProps<{ snapshot: { html: string; scrollY: number }; running: boolean }>()
-const root = ref<HTMLElement | null>(null), source = ref<HTMLElement | null>(null), bike = ref<HTMLElement | null>(null)
+const root = ref<HTMLElement | null>(null), source = ref<HTMLElement | null>(null), bike = ref<HTMLElement | null>(null), ambient = ref<HTMLCanvasElement | null>(null)
 let raf = 0, start = 0
 let draw: (elapsed: number) => void = () => {}
 onMounted(() => {
+  const liveAmbient = document.querySelector<HTMLCanvasElement>('[data-ambient-background]'), ambientContext = ambient.value?.getContext('2d')
   const svg = bike.value!.querySelector('svg')!, crank = svg.querySelector<SVGGElement>('.crank')!
   svg.insertBefore(crank, svg.querySelector('.rider--far'))
   crank.innerHTML = '<circle cx="232" cy="176" r="12" stroke-width="5"/><path class="crank-arms" stroke-width="5"/><path class="pedal-near" stroke="#334038" stroke-width="4"/><path class="pedal-far" stroke="#334038" stroke-width="4"/>'
@@ -17,6 +18,14 @@ onMounted(() => {
   })
   draw = elapsed => {
     if (!root.value || !bike.value || !source.value) return
+    // Share the live background texture; do not create another particle simulation.
+    if (ambient.value && ambientContext && liveAmbient) {
+      if (ambient.value.width !== liveAmbient.width || ambient.value.height !== liveAmbient.height) {
+        ambient.value.width = liveAmbient.width; ambient.value.height = liveAmbient.height
+      }
+      ambientContext.clearRect(0, 0, ambient.value.width, ambient.value.height)
+      if (liveAmbient.dataset.running === 'true') ambientContext.drawImage(liveAmbient, 0, 0)
+    }
     const width = root.value.clientWidth, height = root.value.clientHeight
     const frame = cyclingFrame(width, bike.value.clientWidth, elapsed)
     bike.value.style.transform = `translate3d(${frame.x}px,-55%,0)`
@@ -48,11 +57,12 @@ function play() {
 watch(() => props.running, running => { if (running) play() })
 onBeforeUnmount(() => cancelAnimationFrame(raf))
 </script>
-<template><div ref="root" class="cyclist-scene"><div ref="source" class="cycling-source" inert><div class="cycling-source-content" :style="{ transform: `translateY(-${snapshot.scrollY}px)` }" v-html="snapshot.html" /></div><div ref="bike" class="cycling-rider" v-html="artwork" /></div></template>
+<template><div ref="root" class="cyclist-scene"><div ref="source" class="cycling-source" inert><canvas ref="ambient" class="cycling-ambient" aria-hidden="true"/><div class="cycling-source-content" :style="{ transform: `translateY(-${snapshot.scrollY}px)` }" v-html="snapshot.html" /></div><div ref="bike" class="cycling-rider" v-html="artwork" /></div></template>
 <style>
 .cyclist-scene { position:absolute; inset:0; overflow:hidden; }
 .cycling-source { position:absolute; inset:0; background:var(--color-bg); overflow:hidden; }
-.cycling-source-content { width:100%; transform-origin:top left; }
+.cycling-ambient { position:absolute; inset:0; width:100%; height:100%; opacity:.85; pointer-events:none; }
+.cycling-source-content { position:relative; width:100%; transform-origin:top left; }
 .cycling-source-content * { animation:none!important; transition:none!important; }
 .cycling-rider { position:absolute; top:50%; left:0; width:clamp(290px,30vw,440px); aspect-ratio:2; color:#111916; transform:translate3d(120vw,-55%,0); will-change:transform; }
 .cycling-rider svg { width:100%; height:100%; overflow:visible; display:block; }
