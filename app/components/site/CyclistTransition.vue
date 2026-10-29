@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import artwork from '~/assets/artwork/cyclist.svg?raw'
 import { cyclingFrame, legPose } from '~/utils/cycling-geometry'
 const props = defineProps<{ snapshot: { html: string; scrollY: number }; running: boolean }>()
 const root = ref<HTMLElement | null>(null), source = ref<HTMLElement | null>(null), bike = ref<HTMLElement | null>(null), ambient = ref<HTMLCanvasElement | null>(null)
 let raf = 0, start = 0
 let draw: (elapsed: number) => void = () => {}
+let paintAmbient = () => {}, lastPaint = -Infinity
 onMounted(() => {
   const liveAmbient = document.querySelector<HTMLCanvasElement>('[data-ambient-background]'), ambientContext = ambient.value?.getContext('2d')
   const svg = bike.value!.querySelector('svg')!, crank = svg.querySelector<SVGGElement>('.crank')!
@@ -16,8 +18,7 @@ onMounted(() => {
     rig.innerHTML = '<path class="thigh" fill="none" stroke="#d38b64" stroke-width="14" stroke-linecap="round"/><path class="shorts" fill="none" stroke="#18221e" stroke-width="20" stroke-linecap="round"/><path class="calf" fill="none" stroke="#d38b64" stroke-width="12" stroke-linecap="round"/><g class="foot"><path d="M7 -15L7 -6" stroke="#e7e1d5" stroke-width="10" stroke-linecap="round"/><path d="M-14 -6Q-17 -2 -15 0H15Q20 0 16 -4L6 -9Z" fill="#f0e8d9"/><path d="M-15 0H16" stroke="#68766c" stroke-width="2"/></g>'
     return { rig, side }
   })
-  draw = elapsed => {
-    if (!root.value || !bike.value || !source.value) return
+  paintAmbient = () => {
     // Share the live background texture; do not create another particle simulation.
     if (ambient.value && ambientContext && liveAmbient) {
       if (ambient.value.width !== liveAmbient.width || ambient.value.height !== liveAmbient.height) {
@@ -26,6 +27,9 @@ onMounted(() => {
       ambientContext.clearRect(0, 0, ambient.value.width, ambient.value.height)
       if (liveAmbient.dataset.running === 'true') ambientContext.drawImage(liveAmbient, 0, 0)
     }
+  }
+  draw = elapsed => {
+    if (!root.value || !bike.value || !source.value) return
     const width = root.value.clientWidth, height = root.value.clientHeight
     const frame = cyclingFrame(width, bike.value.clientWidth, elapsed)
     bike.value.style.transform = `translate3d(${frame.x}px,-55%,0)`
@@ -46,15 +50,16 @@ onMounted(() => {
     }
     svg.querySelectorAll<SVGElement>('.wheel').forEach(wheel => { wheel.style.transform = `rotate(${frame.angle * 180 / Math.PI}deg)` })
   }
-  draw(0)
-  if (props.running) play()
-})
-function play() {
-  cancelAnimationFrame(raf); start = performance.now()
-  const tick = (now: number) => { draw(Math.min(2800, now - start)); if (now - start < 2800) raf = requestAnimationFrame(tick) }
+  draw(0); paintAmbient(); lastPaint = performance.now()
+  start = performance.now()
   raf = requestAnimationFrame(tick)
+})
+function tick(now: number) {
+  if (now - lastPaint >= 1000 / 30) { paintAmbient(); lastPaint = now }
+  if (props.running) draw(Math.min(2800, now - start))
+  if (!props.running || now - start < 2800) raf = requestAnimationFrame(tick)
 }
-watch(() => props.running, running => { if (running) play() })
+watch(() => props.running, running => { if (running) start = performance.now() })
 onBeforeUnmount(() => cancelAnimationFrame(raf))
 </script>
 <template><div ref="root" class="cyclist-scene"><div ref="source" class="cycling-source" inert><canvas ref="ambient" class="cycling-ambient" aria-hidden="true"/><div class="cycling-source-content" :style="{ transform: `translateY(-${snapshot.scrollY}px)` }" v-html="snapshot.html" /></div><div ref="bike" class="cycling-rider" v-html="artwork" /></div></template>

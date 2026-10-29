@@ -8,6 +8,7 @@ type CurtainHook = (to: CurtainRoute, from: CurtainRoute, failure?: unknown) => 
 interface CurtainRouter {
   beforeEach: (hook: CurtainHook) => () => void
   afterEach: (hook: CurtainHook) => () => void
+  onError: (hook: (error: unknown, to: CurtainRoute, from: CurtainRoute) => void) => () => void
 }
 
 interface RouteCurtainTiming {
@@ -39,10 +40,10 @@ export const createRouteCurtainController = (
   const target = ref<'gallery' | 'about' | null>(null)
   const snapshot = ref({ html: '', scrollY: 0 })
   let disposed = false
-  let generation = 0, pendingPath: string | undefined
+  let generation = 0, pendingRoute: CurtainRoute | undefined
   const reset = () => {
     generation++
-    pendingPath = undefined
+    pendingRoute = undefined
     state.value = 'idle'
     target.value = null
     snapshot.value = { html: '', scrollY: 0 }
@@ -53,7 +54,7 @@ export const createRouteCurtainController = (
     if (to.path === from.path) return
     reset()
     if (!isCurtainTarget(to.path) || from.path.startsWith('/admin') || timing.reducedMotion()) return
-    pendingPath = to.path
+    pendingRoute = to
     target.value = to.path === '/gallery' ? 'gallery' : 'about'
     snapshot.value = target.value === 'about' ? timing.snapshot?.() ?? { html: '', scrollY: 0 } : { html: '', scrollY: 0 }
     // Signature artwork accompanies navigation; it never adds an artificial route delay.
@@ -63,9 +64,9 @@ export const createRouteCurtainController = (
   const removeAfter = router.afterEach(async (to, from, failure) => {
     if (disposed) return
     if (failure && to.path === from.path) { reset(); return }
-    if (to.path !== pendingPath || to.path === from.path) return
+    if (to !== pendingRoute || to.path === from.path) return
     if (failure) { reset(); return }
-    pendingPath = undefined
+    pendingRoute = undefined
     const current = generation, duration = target.value === 'gallery' ? 1100 : 2900
     await timing.nextFrame()
     if (disposed || current !== generation) return
@@ -73,6 +74,7 @@ export const createRouteCurtainController = (
     await timing.wait(duration)
     if (!disposed && current === generation) reset()
   })
+  const removeError = router.onError((_error, to) => { if (!disposed && to === pendingRoute) reset() })
 
   return {
     phase: readonly(state) as Readonly<Ref<CurtainPhase>>,
@@ -83,6 +85,7 @@ export const createRouteCurtainController = (
       reset()
       removeBefore()
       removeAfter()
+      removeError()
     }
   }
 }

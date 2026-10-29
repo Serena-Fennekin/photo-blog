@@ -20,6 +20,8 @@ const createRouter = () => {
   let afterHook: RouteHook = () => undefined
   const removeBefore = vi.fn()
   const removeAfter = vi.fn()
+  const removeError = vi.fn()
+  const routes = new Map<string, { path: string }>()
 
   return {
     router: {
@@ -27,15 +29,17 @@ const createRouter = () => {
         beforeHook = hook
         return removeBefore
       }),
+      onError: vi.fn(() => removeError),
       afterEach: vi.fn((hook: RouteHook) => {
         afterHook = hook
         return removeAfter
       })
     },
-    before: (path: string, fromPath = '/') => beforeHook({ path }, { path: fromPath }),
-    after: (path: string, fromPath = '/', failure?: unknown) => afterHook({ path }, { path: fromPath }, failure),
+    before: (path: string, fromPath = '/') => { const to = { path }; routes.set(path, to); return beforeHook(to, { path: fromPath }) },
+    after: (path: string, fromPath = '/', failure?: unknown) => afterHook(routes.get(path) ?? { path }, { path: fromPath }, failure),
     removeBefore,
-    removeAfter
+    removeAfter,
+    removeError
   }
 }
 
@@ -159,6 +163,7 @@ describe('createRouteCurtainController', () => {
     controller.dispose()
     expect(fake.removeBefore).toHaveBeenCalledOnce()
     expect(fake.removeAfter).toHaveBeenCalledOnce()
+    expect(fake.removeError).toHaveBeenCalledOnce()
   })
 
   it('does not animate query-only navigation within a curtain target page', async () => {
