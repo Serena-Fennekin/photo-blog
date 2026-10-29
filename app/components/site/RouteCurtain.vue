@@ -22,7 +22,7 @@ onMounted(() => {
     @wheel.prevent
     @touchmove.prevent
   >
-    <SiteApertureTransition v-if="phase !== 'idle' && target === 'gallery'" :phase="phase" />
+    <SiteApertureTransition v-show="phase !== 'idle' && target === 'gallery'" :phase="target === 'gallery' ? phase : 'idle'" />
     <SiteCyclistTransition v-if="phase !== 'idle' && target === 'about'" :snapshot="snapshot" :running="phase === 'revealing'" />
   </div>
 </template>

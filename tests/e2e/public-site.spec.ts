@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import sharp from 'sharp'
+import { irisBundle } from './helpers/iris-bundle'
 import { routeFixtureImages } from './helpers/fixture-images'
 
 test.beforeEach(async ({ page }) => {
@@ -134,7 +135,7 @@ test('opens the gallery from a closed iris below navigation while ambient motion
     const navigation = page.getByRole('link', { name: /进入摄影集/ }).click()
     const iris = page.locator('.aperture-scene')
     await expect(iris).toBeVisible()
-    const faceBrightness = await iris.locator('.iris-metal-face').evaluate(node => (getComputedStyle(node).stopColor.match(/[\d.]+/g) ?? []).slice(0, 3).reduce((sum, value) => sum + Number(value), 0))
+    const faceBrightness = await iris.evaluate(node => { const hex=getComputedStyle(node).getPropertyValue('--iris-face').trim(); return [1,3,5].reduce((sum,index)=>sum+parseInt(hex.slice(index,index+2),16),0) })
     if (theme === '深色') expect(faceBrightness).toBeLessThan(220)
     else expect(faceBrightness).toBeGreaterThan(600)
     await expect(page.locator('.camera-scene')).toHaveCount(0)
@@ -163,7 +164,7 @@ test('opens the gallery from a closed iris below navigation while ambient motion
     await expect(page.getByRole('dialog', { name: '照片详情' })).toBeVisible()
     await page.getByRole('button', { name: /关闭/ }).click()
     await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state', 'idle')
-    await expect(iris).toHaveCount(0)
+    await expect(iris).toBeHidden()
     await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '首页', exact: true }).click()
   }
   await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '关于我', exact: true }).click()
@@ -174,75 +175,73 @@ test('opens the gallery from a closed iris below navigation while ambient motion
   expect(errors).toEqual([])
 })
 
-test('iris blades cover without a central hole and fully clear wide, square and portrait views', async ({ page }) => {
+test('rasterized iris remains closed, opens centrally and clears every supported viewport', async ({page}) => {
   test.setTimeout(60_000)
-  // A retained DOM specimen allows exact CSS-frame checks without extending the real router timer.
-  await page.evaluate(() => {
-    new MutationObserver((_records, observer) => {
-      const scene = document.querySelector('.aperture-scene')
-      if (!scene) return
-      const probe = document.createElement('div')
-      probe.id = 'iris-geometry-probe'; probe.setAttribute('aria-hidden', 'true')
-      probe.style.cssText = 'position:fixed;inset:72px 0 0;pointer-events:none;z-index:2000'
-      const specimen = scene.cloneNode(true) as HTMLElement
-      const ids = new Map<string, string>()
-      specimen.querySelectorAll('[id]').forEach(element => { const old = element.id; ids.set(`url(#${old})`, `url(#${old}-probe)`); element.id = `${old}-probe` })
-      specimen.querySelectorAll('[fill],[clip-path]').forEach(element => {
-        for (const attribute of ['fill', 'clip-path']) {
-          const value = element.getAttribute(attribute)
-          if (value && ids.has(value)) element.setAttribute(attribute, ids.get(value)!)
+  await page.addScriptTag({content:await irisBundle()})
+  const results=await page.evaluate(async()=>{
+    const module=(window as any).IrisTest
+    const results=[],disposedPixels=[]
+    for(const mode of ['auto','2d']){
+      const renderer=module.createIrisRenderer(mode)
+      if(!renderer)throw new Error('Canvas renderer unavailable')
+      const canvas=renderer.canvas as HTMLCanvasElement
+      document.body.append(canvas)
+      try{
+        const gl=renderer.kind==='webgl'?canvas.getContext('webgl'):null
+        const ctx=gl?null:canvas.getContext('2d')!
+        for(const [w,h] of [[3840,2088],[1000,928],[393,788]]){
+          renderer.resize(w,h,3)
+          const frame=(time:number,palette:any)=>{
+            renderer.draw(time,palette)
+            let pixels:ArrayLike<number>
+            if(gl){const data=new Uint8Array(canvas.width*canvas.height*4);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,data);pixels=data}
+            else pixels=ctx!.getImageData(0,0,canvas.width,canvas.height).data
+            const pixel=(x:number,y:number)=>{const px=Math.min(canvas.width-1,Math.floor(x*canvas.width)),py=Math.min(canvas.height-1,Math.floor(y*canvas.height));return ( (gl?canvas.height-1-py:py)*canvas.width+px)*4}
+            const opaque=(x:number,y:number)=>pixels[pixel(x,y)+3]!>220
+            const points=[.01,.25,.5,.75,.99].flatMap(x=>[.01,.25,.5,.75,.99].map(y=>opaque(x,y)))
+            const rim=Array.from({length:72},(_,i)=>opaque(.5+Math.cos(i*Math.PI/36)*.46,.5+Math.sin(i*Math.PI/36)*.46))
+            const shades=[.15,.45,.8].flatMap(x=>[.15,.45,.8].map(y=>pixels[pixel(x,y)]!))
+            return{center:opaque(.5,.5),covered:points.filter(Boolean).length,rim:rim.every(Boolean),variation:Math.max(...shades)-Math.min(...shades)}
+          }
+          for(const palette of [{tip:'#b5c7bf',face:'#dce5df',edge:'#bfcfc7'},{tip:'#14241d',face:'#35443b',edge:'#1d2d24'}]){
+            const closed=frame(0,palette),early=frame(180/1100,palette),middle=frame(.5,palette),open=frame(1,palette)
+            results.push({kind:renderer.kind,pixels:canvas.width*canvas.height,closed,early,middle,open})
+          }
         }
-      })
-      specimen.setAttribute('data-aperture-phase', 'revealing')
-      probe.append(specimen); document.body.append(probe); observer.disconnect()
-    }).observe(document.body, { childList: true, subtree: true })
+      }finally{renderer.dispose();renderer.dispose();renderer.resize(3840,2160,3);renderer.draw(.5);disposedPixels.push(canvas.width*canvas.height)}
+    }
+    return {frames:results,disposedPixels}
   })
-  await page.getByRole('navigation', { name: '主导航' }).getByRole('link', { name: '摄影集', exact: true }).click()
-  const probe = page.locator('#iris-geometry-probe')
-  await expect(probe).toBeAttached()
-  try {
-    for (const viewport of [{ width: 2560, height: 1440 }, { width: 1000, height: 1000 }, { width: 393, height: 852 }]) {
-      await page.setViewportSize(viewport)
-      const coverage = await probe.evaluate(node => {
-        const svg = node.querySelector('svg')!, leaves = [...node.querySelectorAll<SVGPathElement>('.iris-leaf')]
-        const windows = [...node.querySelectorAll<SVGPathElement>('.iris-window')], cap = node.querySelector<SVGCircleElement>('.iris-tipcap')
-        const animations = node.getAnimations({ subtree: true }); animations.forEach(animation => animation.pause())
-        const bounds = node.getBoundingClientRect()
-        const inside = (leaf: SVGGeometryElement, x: number, y: number) => {
-          const point = svg.createSVGPoint(); point.x = bounds.left + bounds.width * x; point.y = bounds.top + bounds.height * y
-          return leaf.isPointInFill(point.matrixTransform(leaf.getScreenCTM()!.inverse()))
-        }
-        const covered = (x: number, y: number) => Boolean(cap && Number(getComputedStyle(cap).opacity) > .5 && inside(cap, x, y)) || leaves.some((leaf, index) => inside(leaf, x, y) && (!windows[index] || inside(windows[index]!, x, y)))
-        const sample = (time: number) => {
-          animations.forEach(animation => { animation.currentTime = time })
-          const points = [.01, .25, .5, .75, .99].flatMap(x => [.01, .25, .5, .75, .99].map(y => covered(x, y)))
-          return { center: covered(.5, .5), covered: points.filter(Boolean).length }
-        }
-        const closed = sample(0)
-        animations.forEach(animation => { animation.currentTime = 180 })
-        const rim = Array.from({ length: 72 }, (_, index) => covered(.5 + Math.cos(index * Math.PI / 36) * .46, .5 + Math.sin(index * Math.PI / 36) * .46))
-        return { closed, rim, middle: sample(550), open: sample(1100) }
-      })
-      expect(coverage.closed).toEqual({ center: true, covered: 25 })
-      expect(coverage.rim.every(Boolean)).toBe(true)
-      expect(coverage.middle.center).toBe(false)
-      expect(coverage.middle.covered).toBeGreaterThan(0)
-      expect(coverage.middle.covered).toBeLessThan(25)
-      expect(coverage.open).toEqual({ center: false, covered: 0 })
-    }
-    if (process.env.IRIS_VISUAL) {
-      await page.setViewportSize({ width: 1280, height: 900 })
-      for (const theme of ['浅色', '深色']) {
-        await page.getByRole('button', { name: theme, exact: true }).click()
-        for (const time of [0, 380, 700, 1100]) {
-          await probe.evaluate((node, frame) => node.getAnimations({ subtree: true }).forEach(animation => { animation.pause(); animation.currentTime = frame }), time)
-          await page.screenshot({ path: `.superpowers/iris-preview/${theme}-${time}.png` })
-        }
-      }
-    }
-  } finally { await probe.evaluate(node => node.remove()) }
+  expect(results.disposedPixels).toEqual([1,1])
+  for(const result of results.frames){
+    expect(result.pixels).toBeLessThanOrEqual(result.kind==='webgl'?1500000:650000)
+    expect(result.closed.center).toBe(true);expect(result.closed.covered,JSON.stringify(result)).toBe(25);expect(result.closed.variation).toBeGreaterThan(4)
+    expect(result.early.rim).toBe(true)
+    expect(result.middle.center).toBe(false);expect(result.middle.covered).toBeGreaterThan(0);expect(result.middle.covered).toBeLessThan(25)
+    expect(result.open.covered).toBe(0)
+  }
 })
 
+test('reuses the iris canvas across navigation and falls back after GPU context loss',async({page})=>{
+  const canvas=page.locator('.aperture-canvas')
+  await expect(canvas).toHaveCount(1)
+  const original=await canvas.elementHandle()
+  await page.getByRole('navigation',{name:'主导航'}).getByRole('link',{name:'摄影集',exact:true}).click()
+  await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state','idle')
+  expect(await canvas.evaluate((node,first)=>node===first,original)).toBe(true)
+  await page.getByRole('navigation',{name:'主导航'}).getByRole('link',{name:'首页',exact:true}).click()
+  await expect(page).toHaveURL(/\/$/)
+  await page.evaluate(()=>{const router=(document.querySelector('#__nuxt') as any).__vue_app__.config.globalProperties.$router;router.beforeResolve(async(to:{path:string})=>{if(to.path==='/gallery')await new Promise(resolve=>setTimeout(resolve,1400))})})
+  const navigation=page.getByRole('navigation',{name:'主导航'}).getByRole('link',{name:'摄影集',exact:true}).click()
+  await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state','covered')
+  const lost=await canvas.evaluate((node:HTMLCanvasElement)=>{if(node.dataset.renderer!=='webgl')return false;node.getContext('webgl')!.getExtension('WEBGL_lose_context')?.loseContext();return true})
+  if(lost) await page.waitForTimeout(60)
+  await expect(canvas).toHaveAttribute('data-renderer','2d')
+  expect(await canvas.evaluate((node:HTMLCanvasElement)=>node.width*node.height)).toBeLessThanOrEqual(650000)
+  expect(await canvas.evaluate((node:HTMLCanvasElement)=>node.width*node.height)).toBeGreaterThan(100000)
+  await navigation
+  await expect(page.locator('[data-route-curtain]')).toHaveAttribute('data-state','idle')
+})
 test('switches decorative backgrounds without blocking navigation and persists the visitor choice', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
