@@ -3,7 +3,7 @@ import {onMounted,ref,watch,nextTick} from 'vue'
 import Icon from './Icon.vue'
 const props=withDefaults(defineProps<{src:string;alt:string;srcset?:string;sizes?:string;width?:number;height?:number;loading?:'lazy'|'eager'}>(),{loading:'lazy'})
 const image=ref<HTMLImageElement|null>(null),state=ref<'loading'|'ready'|'error'>('loading')
-function checkCache(){if(image.value?.complete&&image.value.naturalWidth>0)state.value='ready'}
+function checkCache(){if(image.value?.complete)state.value=image.value.naturalWidth>0?'ready':'error'}
 watch(()=>props.src,async()=>{state.value='loading';await nextTick();checkCache()})
 onMounted(checkCache)
 </script>

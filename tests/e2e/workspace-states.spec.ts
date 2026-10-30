@@ -37,3 +37,38 @@ test('shows pending admin lists and restores saved editor copy after a delayed f
   await page.getByRole('button',{name:'重新加载照片档案'}).click()
   await expect(page.locator('[data-empty="error"]')).toHaveCount(0)
 })
+
+test('protects stored featured selections while settings are pending or failed',async({page})=>{
+  test.setTimeout(90000)
+  await page.goto('/admin/login')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
+  await page.getByLabel('用户名',{exact:true}).fill('local-e2e-owner')
+  await page.getByLabel('密码',{exact:true}).fill('Only-for-isolated-tests-2026!')
+  await page.getByRole('button',{name:/创建账号并进入|^登录$/}).click()
+  await expect(page.getByRole('heading',{name:'照片管理',exact:true})).toBeVisible()
+  let release!:()=>void,fail=true
+  const gate=new Promise<void>(resolve=>{release=resolve}),writes:unknown[]=[]
+  const saved={featuredPhotoIds:['remembered-photo'],photos:[{id:'remembered-photo',title:'已保存的照片',image:{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',width:600,height:900,alt:''}}]}
+  await page.route('**/api/admin/settings',async route=>{
+    if(route.request().method()==='PUT'){writes.push(route.request().postDataJSON());await route.fulfill({json:{}});return}
+    await gate
+    await route.fulfill(fail?{status:503,json:{statusMessage:'temporary failure'}}:{json:saved})
+  })
+  try{
+    await page.getByRole('link',{name:'文案设置',exact:true}).click()
+    await page.getByText('旧版精选设置（当前首页不展示）',{exact:true}).click()
+    const save=page.getByRole('button',{name:'保存首页设置',exact:true})
+    await expect(save).toBeDisabled()
+    release()
+    await expect(page.getByRole('button',{name:'重新加载精选设置',exact:true})).toBeVisible()
+    await expect(save).toBeDisabled()
+    await page.locator('form.admin-settings').evaluate(form=>form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})))
+    expect(writes).toHaveLength(0)
+    fail=false
+    await page.getByRole('button',{name:'重新加载精选设置',exact:true}).click()
+    await expect(page.getByLabel('已保存的照片',{exact:true})).toBeChecked()
+    await expect(save).toBeEnabled()
+    await save.click()
+    await expect.poll(()=>writes).toEqual([{featuredPhotoIds:['remembered-photo']}])
+  }finally{release()}
+})
