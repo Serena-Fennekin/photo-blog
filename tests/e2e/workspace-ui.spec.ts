@@ -15,6 +15,7 @@ test('persists author identity and topics, returns after publishing, and scrolls
   await login(page)
   const api=page.request, ids:string[]=[]
   const title='独立滚动的一天 '+Date.now()
+  const label='沿途观察与旅行生活记录'
   const original=await (await api.get('/api/admin/site-content')).json()
   const visitor=await browser.newContext({viewport:{width:1236,height:1244}}), front=await visitor.newPage()
   try {
@@ -43,7 +44,7 @@ test('persists author identity and topics, returns after publishing, and scrolls
     await page.getByRole('link',{name:'动态',exact:true}).click()
     await page.getByRole('link',{name:'写一条动态',exact:true}).click()
     await page.getByRole('button',{name:'添加话题',exact:true}).click()
-    await page.getByLabel('新话题名称',{exact:true}).fill('沿途观察')
+    await page.getByLabel('新话题名称',{exact:true}).fill(label)
     await page.getByRole('button',{name:'确认添加',exact:true}).click()
     await expect(page.getByLabel('话题',{exact:true})).not.toHaveValue('life')
     const topic=await page.getByLabel('话题',{exact:true}).inputValue()
@@ -87,7 +88,7 @@ test('persists author identity and topics, returns after publishing, and scrolls
     await scroller.focus()
     await target.scrollIntoViewIfNeeded()
     await expect(target).toBeInViewport()
-    await expect(target).toContainText('沿途观察')
+    await expect(target).toContainText(label)
     await expect(target.locator('[data-post-views]')).toHaveText('1 次浏览')
     await front.getByRole('button',{name:'深色',exact:true}).click()
     await expect(target.locator('.moment-ornament--night')).toBeVisible()
@@ -105,7 +106,14 @@ test('persists author identity and topics, returns after publishing, and scrolls
     await front.setViewportSize({width:393,height:852})
     expect(await scroller.evaluate(node=>getComputedStyle(node).overflowY)).toBe('visible')
     expect(await front.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
-    if(process.env.UI_VISUAL){await target.scrollIntoViewIfNeeded();await front.screenshot({path:resolve('.superpowers/sdd/2026-10-30-ui-workspace/about-mobile.png')})}
+    await target.scrollIntoViewIfNeeded()
+    const topicFits=await target.locator('.moment-topic').evaluate(node=>{
+      const bounds=node.getBoundingClientRect(), range=document.createRange()
+      range.selectNodeContents(node)
+      return [...range.getClientRects()].every(line=>line.left>=bounds.left-1&&line.right<=bounds.right+1&&line.bottom<=bounds.bottom+1)
+    })
+    expect(topicFits,'the complete custom topic must fit within its narrow badge').toBe(true)
+    if(process.env.UI_VISUAL)await front.screenshot({path:resolve('.superpowers/sdd/2026-10-30-ui-workspace/about-mobile.png')})
   } finally {
     for(const id of ids) await api.delete('/api/admin/posts/'+id)
     await api.put('/api/admin/site-content',{data:original})

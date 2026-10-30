@@ -16,7 +16,7 @@
 .moment-heading>div { flex:1; min-width:0; }
 .moment-heading strong { font-size:1rem; letter-spacing:.01em; }
 .moment-heading time { display:block; margin-top:5px; font-size:14px; line-height:1.6; font-variant-numeric:tabular-nums; }
-.moment-topic { max-width:34%; overflow-wrap:anywhere; padding:6px 11px; border:1px solid color-mix(in srgb,var(--color-accent) 13%,transparent); background:color-mix(in srgb,var(--color-surface) 50%,transparent); font-size:14px; line-height:1.45; margin:0 0 0 auto; border-radius:10px; }
+.moment-topic { max-width:34%; white-space:normal; overflow-wrap:anywhere; padding:6px 11px; border:1px solid color-mix(in srgb,var(--color-accent) 13%,transparent); background:color-mix(in srgb,var(--color-surface) 50%,transparent); font-size:14px; line-height:1.45; margin:0 0 0 auto; border-radius:10px; }
 .moment-card h3 { margin-top:1.6rem; font-size:1.4rem; font-weight:600; letter-spacing:.01em; }
 .moment-body { line-height:1.95; }
 .moment-meta { border-top:1px solid color-mix(in srgb,var(--color-muted) 12%,transparent); padding-top:1rem; margin-bottom:0; font-size:14px; }
