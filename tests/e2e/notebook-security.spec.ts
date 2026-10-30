@@ -22,7 +22,7 @@ test('does not overwrite stored copy after loading fails and allows a safe retry
     await expect(page.getByLabel('首页引言', { exact: true })).toHaveValue('这段文字必须保留')
     await page.getByLabel('作者名称', { exact: true }).fill('安全修改')
     await page.getByRole('button', { name: '保存网站文案' }).click()
-    await expect(page.getByRole('status')).toContainText('文案已保存')
+    await expect(page.locator('.admin-notices[role=status]')).toContainText('文案已保存')
     expect((await (await page.request.get('/api/admin/site-content')).json()).homeQuote).toBe('这段文字必须保留')
   } finally { await page.request.put('/api/admin/site-content', { data: original }) }
 })

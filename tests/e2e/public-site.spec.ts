@@ -269,6 +269,7 @@ test('uses more of a large monitor and lets categories scroll clear of photograp
   if (!isMobile) {
     await page.setViewportSize({ width: 2560, height: 1440 })
     await page.goto('/about')
+    await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
     expect((await page.locator('.about-page').boundingBox())!.width).toBeGreaterThanOrEqual(1800)
     expect(await page.locator('.about-page__body').evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(20)
     expect(await page.locator('[data-ambient-background]').evaluate((node: HTMLCanvasElement) => node.width * node.height)).toBeLessThanOrEqual(2510000)
@@ -277,9 +278,12 @@ test('uses more of a large monitor and lets categories scroll clear of photograp
   const grid = page.locator('.gallery-grid')
   if (!isMobile) expect((await grid.boundingBox())!.width).toBeGreaterThanOrEqual(1800)
   const filter = page.locator('.category-filter')
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
   await filter.scrollIntoViewIfNeeded()
   const y = await filter.evaluate(node => node.getBoundingClientRect().bottom + scrollY + 500)
-  await page.evaluate(top => window.scrollTo({ top, behavior: 'instant' }), y)
+  await page.mouse.move(300,600)
+  // Damping and mobile emulation need not turn a wheel delta into equal CSS pixels.
+  await page.mouse.wheel(0,Math.max(2400,y))
   await expect.poll(() => filter.evaluate(node => node.getBoundingClientRect().bottom)).toBeLessThanOrEqual(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })

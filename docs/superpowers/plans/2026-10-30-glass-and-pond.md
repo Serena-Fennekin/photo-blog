@@ -23,22 +23,24 @@ Glass/hover/breathing must preserve contrast, stable navigation, mobile scrollin
 
 Files: app/components/ui/{Skeleton,EmptyState,ProgressiveImage,CategoryLabel,Icon}.vue, app/utils/category-presentation.ts; gallery/about/admin pages, PostEditor, GalleryGrid/GalleryCard/CategoryFilter; tests/unit/category-presentation.test.ts and tests/e2e/{ui-polish,workspace-states}.spec.ts; Playwright configs.
 Produces: Skeleton variant gallery/feed/form/list; EmptyState title/description/art with action slot; ProgressiveImage native image props/readiness; categoryPresentation(name) text and icon tokens. Lists use lazy client fetch, guarded states and stable pagination. Existing editor data initializes on resolution with save disabled until ready.
-- [ ] Add category and slow/empty/error/image browser regressions; run and watch missing behaviour fail.
-- [ ] Implement shared primitives and wire real pending/error/empty states, progressive gallery/feed images and category vectors; preserve native form input values.
-- [ ] Verify targeted regressions and existing component/model tests, then commit.
+- [x] Add category and slow/empty/error/image browser regressions; run and watch missing behaviour fail.
+- [x] Implement shared primitives and wire real pending/error/empty states, progressive gallery/feed images and category vectors; preserve native form input values.
+- [x] Verify targeted regressions and existing component/model tests, then commit.
 
 ### Task2: Breathing type and optical surfaces
 
 Files: app/composables/useHomeAnimations.ts; home GalleryInvitation, theme controls, app.vue/UI glass definitions; workspace-ui.css and main.css; ui-polish browser tests.
 Consumes: primitives fromTask1. Produces: bounded optical surfaces,3px capable-pointer card lift, static keyboard focus, theme-icon controls,8s quiet type breathing with reduced-motion fallback.
-- [ ] Add meaningful browser checks for motion/reduced-motion and hover geometry.
-- [ ] Implement CSS tokens, consistent panel/control surfaces and optical edge highlights. Keep all photographs unfiltered by glass.
-- [ ] Inspect desktop/mobile/theme screenshots and run public browser regressions; commit.
+- [x] Add meaningful browser checks for motion/reduced-motion and hover geometry.
+- [x] Implement CSS tokens, consistent panel/control surfaces and optical edge highlights. Keep all photographs unfiltered by glass.
+- [x] Inspect desktop/mobile/theme screenshots and run public browser regressions; commit.
 
 ### Task3: Pond craft and completion
 
 Files: app/utils/ambient-pond-art.ts, ambient-pond.ts, new ambient-shrimp.ts; relevant motion tests and documentation.
 Consumes: existing bounded renderer/loop and cached sprites. Produces: smooth shrimp trajectories and articulated art; refined cached notched leaves and egret details.
-- [ ] Write motion bounds/continuity checks, watch RED, then implement the shrimp motion/art and scene integration.
-- [ ] Inspect enlarged art and actual pond frames at mobile and2560px; preserve switches/budget and run all relevant tests.
+- [x] Write motion bounds/continuity checks, watch RED, then implement the shrimp motion/art and scene integration.
+- [x] Inspect enlarged art and actual pond frames at mobile and2560px; preserve switches/budget and run all relevant tests.
 - [ ] Run full unit, public browser, isolated local/browser, typecheck and production build. One fresh final review, one verified material fix pass if needed, no re-review. Record rulings, commit/push authorized branch, remove only this plan's scratch and leave preview running.
+
+Verification before final review:103/103 unit/component/integration,46/46 desktop/mobile public browser,8/8 isolated admin/security; typecheck and production build exit0. Artwork enlarged and light/dark cards,2560px home and393px phone inspected. The original scroll probe was updated to wait for hydration and use enough wheel input for damped mobile emulation; notification assertions now scope to their host because loaders and empty states also have accessible statuses.
