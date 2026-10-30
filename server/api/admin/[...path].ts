@@ -9,6 +9,7 @@ import { limitRequests, localSetupAllowed } from '../../auth/request-policy'
 import { mediaRoot, processLocalPhoto } from '../../media/local-media-provider'
 import { photoHash, DuplicatePhotoError } from '../../media/photo-identity'
 import { getNotebookStore } from '../../utils/notebook'
+import { createProfileAvatar, normalizeProfileAvatar } from '../../media/profile-avatar'
 
 let processing = false
 const loginSchema = z.object({ username: z.string().trim().min(1).max(60), password: z.string().min(1).max(128) })
@@ -19,7 +20,30 @@ export default defineEventHandler(async event => {
   try {
     if (path[0] === 'site-content') {
       if (method === 'GET') return getNotebookStore().getCopy()
-      if (method === 'PUT') return getNotebookStore().saveCopy(await readBody(event))
+      if (method === 'PUT') {
+        const body = await readBody(event)
+        if (body && Object.hasOwn(body,'authorAvatar')) body.authorAvatar = await normalizeProfileAvatar(body.authorAvatar)
+        return getNotebookStore().saveCopy(body)
+      }
+    }
+    if (path[0] === 'post-topics' && path.length === 1) {
+      if (method === 'GET') return getNotebookStore().listTopics()
+      if (method === 'POST') { limitRequests(event,'post-topic',30); return getNotebookStore().addTopic(await readBody(event)) }
+    }
+    if (path[0] === 'profile-avatar' && path.length === 1 && method === 'POST') {
+      limitRequests(event,'avatar',15)
+      if (processing) throw createError({statusCode:429,statusMessage:'正在处理图片，请稍后重试'})
+      if (Number(getHeader(event,'content-length')) > 5*1024*1024) throw createError({statusCode:413,statusMessage:'头像图片最大5MB'})
+      processing = true
+      try {
+        const chunks:Buffer[]=[]; let size=0
+        for await (const chunk of event.node.req) {
+          const part=Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk); size+=part.length
+          if(size>5*1024*1024) throw createError({statusCode:413,statusMessage:'头像图片最大5MB'})
+          chunks.push(part)
+        }
+        return {avatar:await createProfileAvatar(Buffer.concat(chunks))}
+      } finally {processing=false}
     }
     if (path[0] === 'posts') {
       const notebook = getNotebookStore(), id = path[1]

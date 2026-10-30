@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 import { delimiter, dirname, resolve } from 'node:path'
 
 export default defineConfig({
-  testDir: './tests/e2e', testMatch: ['local-publishing.spec.ts', 'notebook-publishing.spec.ts', 'notebook-security.spec.ts'], workers: 1, timeout: 90000,
+  testDir: './tests/e2e', testMatch: ['local-publishing.spec.ts', 'notebook-publishing.spec.ts', 'notebook-security.spec.ts', 'workspace-ui.spec.ts'], workers: 1, timeout: 90000,
   expect: { timeout: 15000 },
   use: { baseURL: 'http://127.0.0.1:3131', channel: 'chrome', trace: 'retain-on-failure', ...devices['Desktop Chrome'] },
   webServer: {

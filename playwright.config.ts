@@ -3,7 +3,7 @@ import { delimiter, dirname, resolve } from 'node:path'
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: ['local-publishing.spec.ts', 'notebook-publishing.spec.ts', 'notebook-security.spec.ts'],
+  testIgnore: ['local-publishing.spec.ts', 'notebook-publishing.spec.ts', 'notebook-security.spec.ts', 'workspace-ui.spec.ts'],
   workers: 2,
   expect: { timeout: 15000 },
   use: {

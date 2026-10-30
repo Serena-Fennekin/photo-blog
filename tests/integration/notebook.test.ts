@@ -10,6 +10,25 @@ const draft = { title: '', body: '一段日常', topic: 'life', imageIds: [], st
 const asset = (id: string) => ({ id, processingStatus: 'ready' as const, exif: {}, originalKey: id + '.original', image: { src: `/media/${id}/1280.webp`, srcset: '', width: 100, height: 100, alt: '配图' } })
 
 describe('notebook copy and independent posts', () => {
+  it('persists the selected author identity without accepting unsafe avatar sources', () => {
+    const store = setup()
+    const avatar = 'data:image/webp;base64,UklGRgAAAABXRUJQ'
+    store.saveCopy({ authorName: '路上的人', authorAvatar: avatar })
+    expect(new NotebookStore(store.db).getCopy()).toMatchObject({ authorName: '路上的人', authorAvatar: avatar })
+    expect(() => store.saveCopy({ authorAvatar: 'javascript:alert(1)' })).toThrow()
+    expect(() => store.saveCopy({ authorAvatar: 'data:image/svg+xml,<svg/>' })).toThrow()
+  })
+  it('persists custom topics, deduplicates labels and exposes their labels only with public posts', () => {
+    const store = setup()
+    const topic = store.addTopic({ label: '  路边观察  ' })
+    expect(store.addTopic({ label: '路边观察' }).id).toBe(topic.id)
+    expect(store.addTopic({ label: '生活片刻' }).id).toBe('life')
+    expect(new NotebookStore(store.db).listTopics()[topic.id]).toBe('路边观察')
+    const visible = store.savePost(null, { ...draft, topic: topic.id, status: 'published' })
+    expect(store.publicPost(visible.id)).toMatchObject({ topic: topic.id, topicLabel: '路边观察' })
+    expect(() => store.savePost(null, { ...draft, topic: 'unknown-topic' })).toThrow()
+    expect(() => store.addTopic({ label: ' ' })).toThrow()
+  })
   it('uses existing copy as defaults, persists edits, and rejects blank or unexpected fields', () => {
     const store = setup()
     expect(store.getCopy()).toEqual(defaultSiteCopy)

@@ -20,12 +20,13 @@ async function save(status?: 'published' | 'draft') {
   } catch (cause: any) { error.value = cause.data?.statusMessage || '保存失败，请重试' }
   finally { busy.value = false }
 }
+useAdminFeedback(message,error)
 </script>
 <template>
   <section>
     <NuxtLink class="admin-back" to="/admin">← 所有照片</NuxtLink>
     <div class="admin-heading"><div><p class="admin-kicker">{{ photo.status === 'published' ? '已发布的照片' : '照片草稿' }}</p><h1>编辑照片</h1></div><div class="admin-row-actions"><button class="admin-secondary" :disabled="busy" @click="save()">保存照片</button><button v-if="photo.status === 'published'" class="admin-secondary" :disabled="busy" @click="save('draft')">撤回照片</button><button v-else class="admin-primary" :disabled="busy || photo.processingStatus !== 'ready'" @click="save('published')">发布照片</button></div></div>
-    <p v-if="error" role="alert" class="admin-error">{{ error }}</p><p v-if="message" role="status" class="admin-success">{{ message }}</p>
+    <p v-if="error" role="alert" class="admin-error">{{ error }}</p>
     <div class="admin-single-photo">
       <figure class="admin-photo-preview"><img v-if="photo.image" :src="photo.image.src" :alt="photo.image.alt"><p v-else class="admin-error">{{ photo.error || '照片尚未处理完成' }}</p><GalleryExifPanel :exif="photo.exif" /></figure>
       <fieldset class="admin-form" :disabled="busy">

@@ -1,19 +1,20 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { createHash, randomUUID } from 'node:crypto'
 import { z } from 'zod'
-import { defaultSiteCopy } from '../../shared/notebook'
+import { defaultSiteCopy, postTopics } from '../../shared/notebook'
 import type { AdminPost, PostPage, PublicPost, SiteCopy } from '../../shared/types/notebook'
 import type { PhotoAsset } from '../../shared/types/admin'
 
 const text = (max: number) => z.string().trim().max(max)
-const copySchema = z.object({ homeQuote: text(400).min(1), homeLinkLabel: text(24).min(1), aboutTitle: text(40).min(1), aboutStatement: text(200), aboutBody: text(4000), authorName: text(40).min(1), authorTagline: text(160) }).partial().strict()
-const postSchema = z.object({ title: text(120), body: text(10000), topic: z.enum(['life', 'photography', 'cycling', 'gear']), imageIds: z.array(z.string().uuid()).max(9).refine(ids => new Set(ids).size === ids.length), status: z.enum(['draft', 'published']), visibility: z.enum(['public', 'private']) }).strict().refine(post => Boolean(post.body || post.imageIds.length), { message: '请填写正文或添加图片' })
+const copySchema = z.object({ homeQuote: text(400).min(1), homeLinkLabel: text(24).min(1), aboutTitle: text(40).min(1), aboutStatement: text(200), aboutBody: text(4000), authorName: text(40).min(1), authorTagline: text(160), authorAvatar:z.string().max(65536).regex(/^(?:|data:image\/webp;base64,[A-Za-z0-9+/]+={0,2})$/) }).partial().strict()
+const postSchema = z.object({ title: text(120), body: text(10000), topic: text(80).min(1), imageIds: z.array(z.string().uuid()).max(9).refine(ids => new Set(ids).size === ids.length), status: z.enum(['draft', 'published']), visibility: z.enum(['public', 'private']) }).strict().refine(post => Boolean(post.body || post.imageIds.length), { message: '请填写正文或添加图片' })
 type PostRow = { payload: string; total?: number }
 
 export class NotebookStore {
   constructor(readonly db: DatabaseSync) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS site_copy(id INTEGER PRIMARY KEY CHECK(id=1),payload TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS post_topics(id TEXT PRIMARY KEY,label TEXT NOT NULL UNIQUE COLLATE NOCASE);
       CREATE TABLE IF NOT EXISTS posts(id TEXT PRIMARY KEY,status TEXT NOT NULL,visibility TEXT NOT NULL,published_at TEXT NOT NULL,payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS posts_public_feed ON posts(status,visibility,published_at DESC,id DESC);
       CREATE TABLE IF NOT EXISTS post_assets(id TEXT PRIMARY KEY,post_id TEXT,payload TEXT NOT NULL);
@@ -39,6 +40,23 @@ export class NotebookStore {
       return copy
     })
   }
+  listTopics(): Record<string,string> {
+    const rows = this.db.prepare('SELECT id,label FROM post_topics ORDER BY rowid').all() as {id:string;label:string}[]
+    return { ...postTopics, ...Object.fromEntries(rows.map(row => [row.id,row.label])) }
+  }
+  addTopic(input: unknown) {
+    const {label: raw} = z.object({label:text(24).min(1)}).strict().parse(input)
+    const label = raw.normalize('NFKC').replace(/\s+/g,' ')
+    return this.transaction(() => {
+      const entries = Object.entries(this.listTopics())
+      const existing = entries.find(([,value]) => value.toLowerCase() === label.toLowerCase())
+      if (existing) return {id:existing[0],label:existing[1]}
+      if (entries.length >= 100) throw new Error('话题最多100个')
+      const id = randomUUID()
+      this.db.prepare('INSERT INTO post_topics VALUES(?,?)').run(id,label)
+      return {id,label}
+    })
+  }
   addAsset(asset: PhotoAsset) {
     if (asset.processingStatus !== 'ready' || !asset.image) throw new Error('图片尚未处理完成')
     this.db.prepare('INSERT INTO post_assets(id,payload) VALUES(?,?)').run(asset.id, JSON.stringify(asset))
@@ -55,6 +73,7 @@ export class NotebookStore {
     const post = JSON.parse(row.payload) as AdminPost
     post.images = post.imageIds.map(id => this.getAsset(id)).filter((asset): asset is NonNullable<typeof asset> => Boolean(asset?.image)).map(asset => ({ id: asset.id, image: asset.image! }))
     post.viewCount = Number(row.total ?? 0)
+    post.topicLabel = this.listTopics()[post.topic] || post.topic
     return post
   }
   getPost(id: string): AdminPost | null {
@@ -67,6 +86,7 @@ export class NotebookStore {
   savePost(id: string | null, input: unknown): AdminPost {
     const change = postSchema.parse(input)
     return this.transaction(() => {
+      if (!Object.hasOwn(this.listTopics(), change.topic)) throw new Error('请选择已有话题，或先添加新话题')
       const existing = id ? this.getPost(id) : null
       if (id && !existing) throw new Error('动态不存在')
       const key = id || randomUUID(), now = new Date().toISOString()
@@ -87,8 +107,8 @@ export class NotebookStore {
     return { ok: true }
   }
   private project(post: AdminPost): PublicPost {
-    const { id, title, body, topic, images, publishedAt, updatedAt, viewCount } = post
-    return { id, title, body, topic, images, publishedAt, updatedAt, viewCount }
+    const { id, title, body, topic, topicLabel, images, publishedAt, updatedAt, viewCount } = post
+    return { id, title, body, topic, topicLabel, images, publishedAt, updatedAt, viewCount }
   }
   publicPost(id: string): PublicPost | null {
     const post = this.getPost(id)

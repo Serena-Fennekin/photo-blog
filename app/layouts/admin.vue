@@ -8,5 +8,6 @@ const logout = async () => { await $fetch('/api/admin/auth/logout', { method: 'P
   <div class="admin-shell" :inert="!ready">
     <header class="admin-header"><NuxtLink class="site-brand" to="/admin">PHOTO<span>WORKSPACE</span></NuxtLink><nav aria-label="管理导航"><NuxtLink to="/admin">照片</NuxtLink><NuxtLink to="/admin/posts">动态</NuxtLink><NuxtLink to="/admin/categories">分类</NuxtLink><NuxtLink to="/admin/settings">文案设置</NuxtLink><NuxtLink to="/" target="_blank">查看网站 ↗</NuxtLink></nav><SiteThemeSelector /><button class="admin-quiet" type="button" @click="logout">退出</button></header>
     <main class="admin-main"><slot /></main>
+    <UiToastHost />
   </div>
 </template>

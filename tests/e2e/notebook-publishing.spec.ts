@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import sharp from 'sharp'
+test.use({actionTimeout:15000})
 
 test('edits public copy and publishes independent moments with revocable private images', async ({ page, browser }) => {
   test.setTimeout(180000)
@@ -34,7 +35,7 @@ test('edits public copy and publishes independent moments with revocable private
     await page.getByLabel('添加动态图片').setInputFiles([{ name: 'notebook.jpg', mimeType: 'image/jpeg', buffer: input }, { name: 'second.png', mimeType: 'image/png', buffer: second }])
     await expect(page.locator('[data-post-upload]')).toHaveCount(2)
     await page.getByRole('button', { name: '保存私密动态', exact: true }).click()
-    await expect(page).toHaveURL(/\/admin\/posts\/[a-f0-9-]+/)
+    await expect(page).toHaveURL(/\/admin\/posts$/)
     const post = (await (await api.get('/api/admin/posts')).json()).find((post: any) => post.title === '小镜头的一天')
     expect(post.visibility).toBe('private')
     const ownerPage = await api.get('/admin/posts/' + post.id)
@@ -45,6 +46,8 @@ test('edits public copy and publishes independent moments with revocable private
     expect((await visitor.request.get('/api/public/posts/' + post.id)).status()).toBe(404)
     expect((await visitor.request.post('/api/public/posts/' + post.id + '/view')).status()).toBe(404)
     expect((await (await visitor.request.get('/api/public/posts')).json()).items.some((item: any) => item.id === post.id)).toBe(false)
+    await page.goto('/admin/posts/'+post.id)
+    await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
     await page.getByLabel('可见范围').selectOption('public')
     await page.getByRole('button', { name: '发布动态', exact: true }).click()
     await expect(page.getByRole('status')).toContainText('动态已保存')
@@ -71,6 +74,8 @@ test('edits public copy and publishes independent moments with revocable private
     await publicPage.reload()
     await card.scrollIntoViewIfNeeded()
     await expect(card.locator('[data-post-views]')).toContainText('1')
+    await page.goto('/admin/posts/'+post.id)
+    await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
     await page.getByLabel('可见范围').selectOption('private')
     await page.getByRole('button', { name: '保存私密动态', exact: true }).click()
     await expect(page.getByRole('status')).toContainText('动态已保存')
@@ -78,7 +83,8 @@ test('edits public copy and publishes independent moments with revocable private
     await publicPage.reload()
     await expect(publicPage.locator(`[data-post-id="${post.id}"]`)).toHaveCount(0)
     expect((await (await api.get('/api/admin/posts/' + post.id)).json()).viewCount).toBe(1)
-    await page.reload()
+    await page.goto('/admin/posts/'+post.id)
+    await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
     await expect(page.getByLabel('可见范围')).toHaveValue('private')
   } finally {
     await api.put('/api/admin/site-content', { data: originalCopy })

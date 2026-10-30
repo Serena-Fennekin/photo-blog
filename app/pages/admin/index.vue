@@ -98,11 +98,12 @@ function moveFromKeyboard(event: KeyboardEvent, index: number) {
   void move(index, index + (event.key === 'ArrowUp' ? -1 : 1), true)
 }
 function drop(index: number) { const from = photos.value?.findIndex(photo => photo.id === dragId.value) ?? -1; dragId.value = null; if (from >= 0) void move(from, index) }
+useAdminFeedback(message,error)
 </script>
 <template>
   <section>
-    <div class="admin-heading"><div><p class="admin-kicker">你的影像档案</p><h1>照片管理</h1><p class="admin-description">每张照片独立整理。一次可以上传多张，随后分别编辑或多选发布。</p></div></div>
-    <p v-if="error" role="alert" class="admin-error">{{ error }}</p><p role="status" aria-live="polite" aria-atomic="true" class="admin-success" :class="{ 'admin-live-empty': !message }">{{ message }}</p>
+    <div class="admin-heading"><div><p class="admin-kicker">我的影像档案</p><h1>照片管理</h1><p class="admin-description">每张照片独立整理。一次可以上传多张，随后分别编辑或多选发布。</p></div></div>
+    <p v-if="error" role="alert" class="admin-error">{{ error }}</p>
     <div class="admin-stats"><span><strong>{{ photos?.length || 0 }}</strong> 张照片</span><span><strong>{{ photos?.filter(photo => photo.status === 'published').length || 0 }}</strong> 已发布</span><span><strong>{{ photos?.filter(photo => photo.status === 'draft').length || 0 }}</strong> 草稿</span></div>
     <label class="admin-dropzone" for="batch-photos" @dragover.prevent @drop.prevent="uploadFiles(Array.from($event.dataTransfer?.files || []))">
       <span>{{ uploading ? '正在逐张上传和处理…' : '拖入照片，或点击批量选择' }}</span><small>JPEG / PNG / WebP · 单张最大25MB · 每次最多选择100张</small>
@@ -117,13 +118,13 @@ function drop(index: number) { const from = photos.value?.findIndex(photo => pho
     </fieldset>
     <p id="photo-sort-help" class="admin-meta">拖动卡片调整整个摄影集的顺序，松开后自动保存。<span class="admin-sort-instructions">也可以聚焦卡片后，按向上或向下方向键调整前后顺序。</span></p>
     <fieldset ref="library" class="admin-photo-grid admin-photo-library" :disabled="busy || uploading" :aria-busy="busy || uploading">
-      <article v-for="(photo,index) in photos" :key="photo.id" class="admin-photo-card" :data-admin-photo-id="photo.id" tabindex="0" :aria-labelledby="'admin-photo-title-' + photo.id" aria-describedby="photo-sort-help" :draggable="!busy && !uploading" @keydown="moveFromKeyboard($event,index)" @dragstart="dragId=photo.id" @dragend="dragId=null" @dragover.prevent @drop.prevent="drop(index)">
+      <article v-for="(photo,index) in photos" :key="photo.id" class="admin-photo-card" :data-selected="selected.includes(photo.id)" :data-admin-photo-id="photo.id" tabindex="0" :aria-labelledby="'admin-photo-title-' + photo.id" aria-describedby="photo-sort-help" :draggable="!busy && !uploading" @keydown="moveFromKeyboard($event,index)" @dragstart="dragId=photo.id" @dragend="dragId=null" @dragover.prevent @drop.prevent="drop(index)">
         <img v-if="photo.image" :src="photo.image.src" :alt="photo.image.alt" loading="lazy" draggable="false">
         <div v-else class="admin-photo-failed">{{ photo.error || '图片处理失败' }}<button class="admin-secondary" @click="retry(photo.id)">重试处理</button></div>
         <div class="admin-photo-fields">
-          <label class="admin-check"><input v-model="selected" type="checkbox" :value="photo.id" :disabled="photo.processingStatus !== 'ready'" :aria-label="'选择照片：' + (photo.title || photo.id)"><span class="admin-photo-status" :data-status="photo.status">{{ photo.status === 'published' ? '已发布' : '草稿' }}</span></label>
+          <label class="admin-check"><input v-model="selected" type="checkbox" :value="photo.id" :disabled="photo.processingStatus !== 'ready'" :aria-label="'选择照片：' + (photo.title || photo.id)"><span class="admin-selection-label">{{ selected.includes(photo.id) ? '已选择' : '选择' }}</span><span class="admin-photo-status" :data-status="photo.status">{{ photo.status === 'published' ? '已发布' : '草稿' }}</span></label>
           <h2 :id="'admin-photo-title-' + photo.id">{{ photo.title || '未命名照片' }}</h2><p class="admin-meta">{{ photo.capturedOn }}<span v-if="photo.location"> · {{ photo.location }}</span></p>
-          <div class="admin-row-actions"><button class="admin-secondary" @click="navigateTo('/admin/photos/' + photo.id)">编辑</button><a v-if="photo.status === 'published'" :href="'/gallery?photo=' + photo.id" target="_blank" rel="noopener">查看 ↗</a><button class="admin-quiet" @click="apply({status:'deleted'},[photo.id])">移除</button></div>
+          <div class="admin-row-actions"><button class="admin-secondary" @click="navigateTo('/admin/photos/' + photo.id)"><UiIcon name="edit"/>编辑</button><a v-if="photo.status === 'published'" :href="'/gallery?photo=' + photo.id" target="_blank" rel="noopener" class="admin-action-link"><UiIcon name="eye"/>查看</a><button class="admin-quiet" @click="apply({status:'deleted'},[photo.id])"><UiIcon name="trash"/>移除</button></div>
         </div>
       </article>
     </fieldset>

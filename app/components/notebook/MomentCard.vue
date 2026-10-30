@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { postTopics } from '#shared/notebook'
+import { topicLabel, formatPostDate } from '#shared/notebook'
 import type { PublicPost } from '../../../shared/types/notebook'
-const props = defineProps<{ post: PublicPost; author: string; readable: boolean }>()
+const props = defineProps<{ post: PublicPost; author: string; avatar?:string; readable: boolean }>()
 const emit = defineEmits<{ images: [post: PublicPost, index: number] }>()
 const root = ref<HTMLElement | null>(null), total = ref(props.post.viewCount)
 let observer: IntersectionObserver | undefined, timer: ReturnType<typeof setTimeout> | undefined
 let counted = false, disposed = false, intersecting = false, pending = false
-const date = computed(() => new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Shanghai' }).format(new Date(props.post.publishedAt)))
+const date = computed(() => formatPostDate(props.post.publishedAt))
 function schedule() {
   clearTimeout(timer)
   if (!intersecting || !props.readable || counted || pending || disposed) return
@@ -29,7 +29,8 @@ onBeforeUnmount(() => { disposed = true; clearTimeout(timer); observer?.disconne
 </script>
 <template>
   <article ref="root" class="moment-card" :data-post-id="post.id">
-    <header class="moment-heading"><span class="moment-avatar" aria-hidden="true">{{ author.slice(0, 1) }}</span><div><strong>{{ author }}</strong><time :datetime="post.publishedAt">{{ date }}</time></div><span class="moment-topic">{{ postTopics[post.topic] }}</span></header>
+    <NotebookCardOrnament />
+    <header class="moment-heading"><UiAuthorAvatar class="moment-avatar" :name="author" :src="avatar"/><div><strong>{{ author }}</strong><time :datetime="post.publishedAt">{{ date }}</time></div><span class="moment-topic">{{ post.topicLabel || topicLabel(post.topic) }}</span></header>
     <h3 v-if="post.title">{{ post.title }}</h3>
     <p v-if="post.body" class="moment-body">{{ post.body }}</p>
     <div v-if="post.images.length" class="moment-images" :class="{ 'moment-images--single': post.images.length === 1 }">
