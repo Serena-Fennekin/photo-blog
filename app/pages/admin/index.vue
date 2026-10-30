@@ -3,7 +3,7 @@ import type { AdminCategory, AdminPhoto, BulkPhotoResult } from '../../../shared
 import {categoryPresentation} from '~/utils/category-presentation'
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 const { data: photos, pending:loadPending,error:loadError, refresh } = await useFetch<AdminPhoto[]>('/api/admin/photos',{lazy:true})
-const { data: categories } = await useFetch<AdminCategory[]>('/api/admin/categories')
+const { data: categories } = await useFetch<AdminCategory[]>('/api/admin/categories',{lazy:true})
 const selected = ref<string[]>([]), busy = ref(false), uploading = ref(false), error = ref(''), message = ref(''), bulkCategory = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const library = ref<HTMLFieldSetElement | null>(null)

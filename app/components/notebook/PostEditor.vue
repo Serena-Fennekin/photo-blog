@@ -3,7 +3,7 @@ import { postTopics } from '#shared/notebook'
 import type { AdminPost, PostImage } from '../../../shared/types/notebook'
 const props = defineProps<{ postId?: string }>()
 const { data: existing,pending:loadPending, error: loadError } = props.postId ? await useFetch<AdminPost>(`/api/admin/posts/${props.postId}`,{lazy:true}) : { data: ref<AdminPost | null>(null),pending:ref(false), error: ref(null) }
-const {data:topics,error:topicError}=await useFetch<Record<string,string>>('/api/admin/post-topics',{default:()=>({...postTopics})})
+const {data:topics,pending:topicsPending,error:topicError}=await useFetch<Record<string,string>>('/api/admin/post-topics',{lazy:true,default:()=>({...postTopics})})
 const form = reactive({ title: existing.value?.title ?? '', body: existing.value?.body ?? '', topic: existing.value?.topic ?? 'life', visibility: existing.value?.visibility ?? 'public' })
 const options=computed(()=>({...topics.value,...(existing.value?{[existing.value.topic]:existing.value.topicLabel||existing.value.topic}:{})}))
 const images = ref<PostImage[]>(existing.value?.images ?? []), busy = ref(false), uploading = ref(false), error = ref('')
@@ -13,7 +13,7 @@ const newTopic=ref(''), addingTopic=ref(false), creatingTopic=ref(false)
 const notices=useAdminNotice()
 watch(error,value=>{if(value)notices.show(value,'error')})
 async function createTopic(){
-  if(creatingTopic.value||!newTopic.value.trim())return
+  if(creatingTopic.value||topicsPending.value||!newTopic.value.trim())return
   creatingTopic.value=true;error.value=''
   try{
     const topic=await $fetch<{id:string;label:string}>('/api/admin/post-topics',{method:'POST',body:{label:newTopic.value}})
@@ -68,7 +68,7 @@ async function save(status: 'draft' | 'published') {
       <aside class="admin-post-publish">
         <div class="admin-publish-heading">发布设置<span>文字与照片，都是日常</span></div>
         <label>话题<select v-model="form.topic" aria-label="话题" :disabled="busy || uploading || creatingTopic"><option v-for="(label, topic) in options" :key="topic" :value="topic">{{ label }}</option></select></label>
-        <button v-if="!addingTopic" class="admin-quiet admin-add-topic" type="button" :disabled="busy||uploading" @click="addingTopic=true"><UiIcon name="plus"/>添加话题</button>
+        <button v-if="!addingTopic" class="admin-quiet admin-add-topic" type="button" :disabled="busy||uploading||topicsPending" @click="addingTopic=true"><UiIcon name="plus"/>添加话题</button>
         <div v-else class="admin-topic-create" role="group" aria-label="添加新话题"><label>新话题名称<input v-model="newTopic" maxlength="24" :disabled="creatingTopic" @keydown.enter.prevent="createTopic"></label><div class="admin-row-actions"><button class="admin-secondary" type="button" :disabled="creatingTopic||!newTopic.trim()" @click="createTopic">确认添加</button><button class="admin-quiet" type="button" :disabled="creatingTopic" @click="addingTopic=false">取消</button></div></div>
         <p v-if="topicError" class="admin-meta">话题列表暂未加载，可继续使用当前话题。</p>
         <label>可见范围<select v-model="form.visibility" aria-label="可见范围" :disabled="busy || uploading"><option value="public">公开 · 所有人可见</option><option value="private">私密 · 仅后台可见</option></select></label>

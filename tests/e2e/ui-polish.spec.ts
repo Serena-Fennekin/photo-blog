@@ -14,11 +14,9 @@ test('shows a real pending gallery skeleton, illustrated empty state and recover
   release()
   await expect(page.locator('[data-skeleton="gallery"]')).toHaveCount(0)
   await expect(page.locator('.gallery-empty svg')).toBeVisible()
-  await expect(page.locator('.gallery-empty').getByRole('link',{name:'查看全部照片'})).toBeVisible()
+  await expect(page.locator('.gallery-empty').getByRole('link',{name:'看看近况'})).toHaveAttribute('href','/about')
   await page.unroute('**/api/public/gallery*')
   await page.route('**/api/public/gallery*',route=>route.fulfill({status:503,json:{statusMessage:'unavailable'}}))
-  await page.getByRole('link',{name:'查看全部照片'}).click()
-  await page.reload()
   // Navigate on the client so browser interception sees the request.
   await page.goto('/')
   await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
@@ -85,4 +83,31 @@ test('keeps a pending feed out of the empty state and adds restrained card lift'
   await expect(page.locator('[data-home-motion-root]')).toHaveAttribute('data-motion-mode','static')
   expect(await page.locator('#gallery-invitation-title').evaluate(node=>getComputedStyle(node).opacity)).toBe('1')
   expect(await page.locator('#gallery-invitation-title').evaluate(node=>node.getAnimations().filter(animation=>animation.playState==='running').length)).toBe(0)
+})
+
+test('ignores an older category page that finishes after switching filters',async({page,request})=>{
+  const fixture=await(await request.get('/api/public/gallery')).json()
+  const [initial,late,replacement]=fixture.items
+  let release!:()=>void
+  const gate=new Promise<void>(resolve=>{release=resolve})
+  await page.route('**/api/public/gallery*',async route=>{
+    const query=new URL(route.request().url()).searchParams
+    if(query.get('cursor')){await gate;await route.fulfill({json:{items:[late],nextCursor:null,categories:fixture.categories}});return}
+    await route.fulfill({json:{items:[query.get('category')?replacement:initial],nextCursor:query.get('category')?null:'delayed-page',categories:[{slug:'other',name:'另一个主题'}]}})
+  })
+  try{
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
+    await page.locator('.site-nav').getByRole('link',{name:'摄影集',exact:true}).click()
+    await page.getByRole('button',{name:'加载更多',exact:true}).click()
+    await expect(page.locator('[data-skeleton="gallery"]')).toBeVisible()
+    await page.locator('.gallery-heading').scrollIntoViewIfNeeded()
+    await page.locator('[data-category="other"]').click()
+    await expect(page.locator(`[data-photo-id="${replacement.id}"]`)).toBeVisible()
+    const finished=page.waitForResponse(response=>response.url().includes('cursor=delayed-page'))
+    release();await finished
+    await page.waitForTimeout(150)
+    await expect(page.locator(`[data-photo-id="${late.id}"]`)).toHaveCount(0)
+    await expect(page.locator('.gallery-card')).toHaveCount(1)
+  }finally{release()}
 })

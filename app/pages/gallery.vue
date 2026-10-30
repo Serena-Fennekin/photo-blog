@@ -83,7 +83,7 @@ useSeoMeta({
 
     <UiSkeleton v-if="pending && !items.length" variant="gallery" label="正在加载照片" :count="6"/>
     <UiEmptyState v-else-if="loadError && !items.length" art="error" title="照片暂时没有加载出来。" description="连接可能有些慢，重新加载即可继续观看。"><button class="admin-secondary" @click="refresh()">重新加载照片</button></UiEmptyState>
-    <GalleryGrid v-else :items="items" :interactive="galleryReady" @select="lightbox.openPhoto" />
+    <GalleryGrid v-else :items="items" :filtered="Boolean(activeCategory)" :interactive="galleryReady" @select="lightbox.openPhoto" />
 
     <UiSkeleton v-if="loadingMore" variant="gallery" label="正在加载更多照片" :count="3"/>
     <div v-if="nextCursor" class="gallery-more">

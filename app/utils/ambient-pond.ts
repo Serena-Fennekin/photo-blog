@@ -1,8 +1,9 @@
 import { createWaterField, createRipplePool } from './ambient-water'
-import { createLeafSprite, createLotusSprite, createPavilionSprite, drawEgret } from './ambient-pond-art'
+import { createLeafSprite, createLotusSprite, createLotusBudSprite, createPavilionSprite, createEgretSprite, drawEgret } from './ambient-pond-art'
+import {createShrimpSprite,drawShrimp} from './ambient-shrimp'
 
 export function createPondScene(ctx: CanvasRenderingContext2D) {
-  const leaf = createLeafSprite(), lotus = createLotusSprite(), pavilion = createPavilionSprite()
+  const leaves=[0,1,2].map(createLeafSprite),lotus=createLotusSprite(),bud=createLotusBudSprite(),pavilion=createPavilionSprite(),egret=createEgretSprite(),shrimp=createShrimpSprite()
   const texture = document.createElement('canvas'), textureContext = texture.getContext('2d')!
   const rings = createRipplePool(48)
   let width = 1, height = 1, columns = 80, rows = 60, field = createWaterField(columns, rows)
@@ -111,16 +112,18 @@ export function createPondScene(ctx: CanvasRenderingContext2D) {
     const scale = width < 720 ? .65 : width > 1800 ? 1.25 : 1
     ctx.save(); ctx.globalAlpha = .23; const pw = 165 * scale; ctx.drawImage(pavilion, width * .94 - pw * .5, height * .12, pw, pw * 2 / 3); ctx.restore()
     for (let i = 0; i < (width < 720 ? 2 : 3); i++) koi(time, i)
+    for(let i=0;i<(width<720?2:3);i++)drawShrimp(ctx,shrimp,time,i,width,height)
     for (let i = 0; i < 8; i++) {
       const t = time * .00024 + i * 2.7, x = width * (i % 2 ? .945 : .055) + Math.sin(t) * 4 + Math.sin(t * 1.77) * 2
       const y = height * (.31 + Math.floor(i / 2) * .21) + Math.sin(t * .83) * 3 + Math.sin(t * 1.31) * 1.5
       const size = (i % 3 === 0 ? 118 : 90) * scale
       ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t * .71) * .035 + Math.sin(t * 1.43) * .018); ctx.globalAlpha = .48
-      ctx.drawImage(leaf, -size * .5, -size * .375, size, size * .75)
+      ctx.drawImage(leaves[i%3]!, -size * .5, -size * .375, size, size * .75)
       if (i === 1 || i === 4 || i === 7) { ctx.globalAlpha = .67; ctx.drawImage(lotus, -size * .32, -size * .87, size * .68, size * .68) }
+      if(i===2){ctx.globalAlpha=.64;ctx.drawImage(bud,-size*.2,-size*.82,size*.42,size*.67)}
       ctx.restore()
     }
-    drawEgret(ctx, width * .045, height * .83, scale, time)
+    drawEgret(ctx,egret, width * .105, height * .83, scale, time)
     dragonfly(time, 0); if (width > 720) dragonfly(time, 1)
     ripples(time)
     ctx.strokeStyle = 'rgba(103,146,157,.19)'; ctx.lineWidth = .8

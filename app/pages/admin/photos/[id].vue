@@ -5,7 +5,7 @@ const id = String(useRoute().params.id), request = useRequestFetch()
 const { data: record,pending:loadPending,error:loadError,refresh } = await useAsyncData('edit-photo-' + id, () => request<AdminPhoto>('/api/admin/photos/' + id),{lazy:true})
 const photo = ref<AdminPhoto|null>(record.value?structuredClone(toRaw(record.value)):null)
 watch(record,value=>{if(value)photo.value=structuredClone(toRaw(value))})
-const { data: categories } = await useFetch<AdminCategory[]>('/api/admin/categories')
+const { data: categories } = await useFetch<AdminCategory[]>('/api/admin/categories',{lazy:true})
 const busy = ref(false), error = ref(''), message = ref('')
 async function save(status?: 'published' | 'draft') {
   if (busy.value||loadPending.value||loadError.value||!photo.value) return
