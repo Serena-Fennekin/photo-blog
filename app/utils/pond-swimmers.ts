@@ -1,6 +1,9 @@
 export type PondSwimmer={kind:'koi'|'shrimp';index:number;x:number;y:number;angle:number;radius:number}
 type Orbit={angles:number[];lengths:number[];total:number}
 const orbits=new Map<string,Orbit>(),TAU=Math.PI*2
+// Mobile residents keep these spread-out slots; desktop adds the two gaps.
+// Density changes must never re-index the phase of an existing creature.
+const phaseSlots=[0,1,3,4,2,5] as const
 
 function point(angle:number,width:number,height:number){
   return {x:width*(.5+.34*Math.cos(angle)+.018*Math.sin(2*angle)),y:height*(.5+.34*Math.sin(angle)+.018*Math.cos(3*angle))}
@@ -27,7 +30,7 @@ function orbit(width:number,height:number){
 export function pondSwimmers(time:number,width:number,height:number):PondSwimmer[]{
   const track=orbit(width,height),count=width<720?4:6,result:PondSwimmer[]=[]
   for(let slot=0;slot<count;slot++){
-    const progress=time*.0000062+slot/count+.012*Math.sin(time*.00011+slot*1.8)
+    const progress=time*.0000062+phaseSlots[slot]!/6+.012*Math.sin(time*.00011+slot*1.8)
     const distance=((progress%1+1)%1)*track.total
     let low=0,high=track.lengths.length-1
     while(high-low>1){const mid=(low+high)>>1;if(track.lengths[mid]!<distance)low=mid;else high=mid}
