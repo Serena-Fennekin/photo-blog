@@ -54,6 +54,12 @@ describe('route curtain targets', () => {
 })
 
 describe('createRouteCurtainController', () => {
+  it('releases the shorter about signature after2600ms',async()=>{
+    const fake=createRouter(),wait=vi.fn(()=>Promise.resolve())
+    createRouteCurtainController(fake.router,{nextFrame:()=>Promise.resolve(),wait,reducedMotion:()=>false})
+    await fake.before('/about');await fake.after('/about')
+    expect(wait).toHaveBeenCalledWith(2600)
+  })
   it('lets gallery navigation continue immediately and runs its short signature over the destination', async () => {
     const fake = createRouter()
     const reveal = deferred()

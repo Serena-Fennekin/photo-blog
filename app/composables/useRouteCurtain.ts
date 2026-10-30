@@ -1,4 +1,5 @@
 import { onScopeDispose, readonly, ref, type Ref } from 'vue'
+import {ABOUT_CURTAIN_MS} from '~/utils/route-motion-timing'
 
 export type CurtainPhase = 'idle' | 'preparing' | 'covering' | 'covered' | 'revealing'
 
@@ -67,7 +68,7 @@ export const createRouteCurtainController = (
     if (to !== pendingRoute || to.path === from.path) return
     if (failure) { reset(); return }
     pendingRoute = undefined
-    const current = generation, duration = target.value === 'gallery' ? 1100 : 2900
+    const current = generation, duration = target.value === 'gallery' ? 1100 : ABOUT_CURTAIN_MS
     await timing.nextFrame()
     if (disposed || current !== generation) return
     state.value = 'revealing'

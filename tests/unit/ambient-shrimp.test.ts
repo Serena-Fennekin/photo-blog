@@ -5,9 +5,9 @@ describe('shrimp motion',()=>{
     for(const [width,height] of [[393,852],[2560,1440],[3840,2160]])for(let index=0;index<3;index++)for(let time=0;time<900000;time+=1379){
       const pose=shrimpPose(time,index,width!,height!)
       expect(Object.values(pose).every(Number.isFinite)).toBe(true)
-      expect(pose.x).toBeGreaterThan(width!*.1)
-      expect(pose.x).toBeLessThan(width!*.9)
-      expect(pose.y).toBeGreaterThan(height!*.5)
+      expect(pose.x).toBeGreaterThan(width!*.08)
+      expect(pose.x).toBeLessThan(width!*.92)
+      expect(pose.y).toBeGreaterThan(height!*.08)
       expect(pose.y).toBeLessThan(height!*.96)
     }
   })

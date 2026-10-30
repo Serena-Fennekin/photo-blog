@@ -9,7 +9,7 @@ const labels: Record<ThemePreference, string> = {
   light: '浅色'
 }
 
-const { preference, setPreference } = useThemePreference()
+const { preference, resolvedTheme, setPreference } = useThemePreference()
 const interactive = ref(false)
 const selector = ref<HTMLElement | null>(null)
 const indicator = ref<{ width: string; height: string; transform: string; transition?: string } | null>(null)
@@ -62,7 +62,7 @@ onBeforeUnmount(() => { observer?.disconnect(); cancelAnimationFrame(frame); win
       :data-theme-choice="choice"
       :aria-pressed="preference === choice"
       :aria-label="labels[choice]"
-      :title="labels[choice]"
+      :title="choice==='system'&&preference==='system'?`跟随浏览器提供的配色：${resolvedTheme==='dark'?'深色':'浅色'}`:labels[choice]"
       @click="setPreference(choice)"
     >
       <UiIcon :name="choice==='system'?'monitor':choice==='dark'?'moon':'sun'"/><span class="theme-selector__label">{{ labels[choice] }}</span>

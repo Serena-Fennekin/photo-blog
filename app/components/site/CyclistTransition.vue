@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import artwork from '~/assets/artwork/cyclist.svg?raw'
 import { cyclingFrame, legPose } from '~/utils/cycling-geometry'
+import {ABOUT_RIDE_MS} from '~/utils/route-motion-timing'
 const props = defineProps<{ snapshot: { html: string; scrollY: number }; running: boolean }>()
 const root = ref<HTMLElement | null>(null), source = ref<HTMLElement | null>(null), bike = ref<HTMLElement | null>(null), ambient = ref<HTMLCanvasElement | null>(null)
 let raf = 0, start = 0
@@ -56,8 +57,8 @@ onMounted(() => {
 })
 function tick(now: number) {
   if (now - lastPaint >= 1000 / 30) { paintAmbient(); lastPaint = now }
-  if (props.running) draw(Math.min(2800, now - start))
-  if (!props.running || now - start < 2800) raf = requestAnimationFrame(tick)
+  if (props.running) draw(Math.min(ABOUT_RIDE_MS, now - start))
+  if (!props.running || now - start < ABOUT_RIDE_MS) raf = requestAnimationFrame(tick)
 }
 watch(() => props.running, running => { if (running) start = performance.now() })
 onBeforeUnmount(() => cancelAnimationFrame(raf))

@@ -1,6 +1,7 @@
 import { createWaterField, createRipplePool } from './ambient-water'
 import { createLeafSprite, createLotusSprite, createLotusBudSprite, createPavilionSprite, createEgretSprite, drawEgret } from './ambient-pond-art'
 import {createShrimpSprite,drawShrimp} from './ambient-shrimp'
+import {pondSwimmers,type PondSwimmer} from './pond-swimmers'
 
 export function createPondScene(ctx: CanvasRenderingContext2D) {
   const leaves=[0,1,2].map(createLeafSprite),lotus=createLotusSprite(),bud=createLotusBudSprite(),pavilion=createPavilionSprite(),egret=createEgretSprite(),shrimp=createShrimpSprite()
@@ -78,10 +79,8 @@ export function createPondScene(ctx: CanvasRenderingContext2D) {
       }
     }
   }
-  function koi(time: number, index: number) {
-    const t = time * (.000075 + index * .000008) + index * 2.4
-    const x = width * (.5 + .34 * Math.sin(t)), y = height * (.64 + .22 * Math.sin(t * .73 + index))
-    const angle = Math.atan2(height * .22 * .73 * Math.cos(t * .73 + index), width * .34 * Math.cos(t))
+  function koi(time: number, index: number,pose:PondSwimmer) {
+    const {x,y,angle}=pose
     const scale = width < 720 ? .7 : width > 1800 ? 1.2 : 1
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(scale, scale); ctx.globalAlpha = .52
     const wag = Math.sin(time * .005 + index) * 7
@@ -111,8 +110,10 @@ export function createPondScene(ctx: CanvasRenderingContext2D) {
     ctx.save(); water(time)
     const scale = width < 720 ? .65 : width > 1800 ? 1.25 : 1
     ctx.save(); ctx.globalAlpha = .23; const pw = 165 * scale; ctx.drawImage(pavilion, width * .94 - pw * .5, height * .12, pw, pw * 2 / 3); ctx.restore()
-    for (let i = 0; i < (width < 720 ? 2 : 3); i++) koi(time, i)
-    for(let i=0;i<(width<720?2:3);i++)drawShrimp(ctx,shrimp,time,i,width,height)
+    for(const pose of pondSwimmers(time,width,height)){
+      if(pose.kind==='koi')koi(time,pose.index,pose)
+      else drawShrimp(ctx,shrimp,time,pose.index,width,height,pose)
+    }
     for (let i = 0; i < 8; i++) {
       const t = time * .00024 + i * 2.7, x = width * (i % 2 ? .945 : .055) + Math.sin(t) * 4 + Math.sin(t * 1.77) * 2
       const y = height * (.31 + Math.floor(i / 2) * .21) + Math.sin(t * .83) * 3 + Math.sin(t * 1.31) * 1.5
