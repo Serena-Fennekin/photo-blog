@@ -63,3 +63,24 @@ test('card hover keeps the same inset shadow without a dark outside band',async(
   const after=await card.evaluate(node=>({shadow:getComputedStyle(node).boxShadow,fill:getComputedStyle(node).backgroundColor}))
   expect(after).toEqual(before)
 })
+
+test('anchors the narrow admin capsule without relying on backdrop filters',async({page})=>{
+  await page.setViewportSize({width:800,height:1000})
+  await page.emulateMedia({contrast:'more'})
+  await page.goto('/');await expect(page.locator('html')).toHaveAttribute('data-app-ready','true')
+  // Exercise the real component and loaded admin styles without an account or
+  // real content. Moving its DOM preserves its observer and preference wiring.
+  await page.evaluate(()=>{
+    const header=document.createElement('header');header.className='admin-header'
+    header.style.cssText='position:fixed;inset:160px 0 auto;z-index:100'
+    header.append(document.querySelector('.theme-selector')!)
+    document.body.append(header)
+  })
+  const group=page.locator('.admin-header .theme-selector')
+  expect(await group.evaluate(node=>getComputedStyle(node).backdropFilter)).toBe('none')
+  const choice=group.getByRole('button',{name:'深色',exact:true});await choice.click()
+  await expect.poll(async()=>{
+    const a=await choice.boundingBox(),b=await group.locator('.theme-selector__indicator').boundingBox()
+    return a&&b?Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y),Math.abs(a.width-b.width),Math.abs(a.height-b.height)):999
+  },{timeout:3000}).toBeLessThan(1.5)
+})
