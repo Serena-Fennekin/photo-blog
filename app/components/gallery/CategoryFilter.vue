@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Category } from '~/types/content'
+import CategoryLabel from '../ui/CategoryLabel.vue'
 
 defineProps<{
   categories: Category[]
@@ -23,7 +24,7 @@ defineProps<{
       :to="{ path: '/gallery', query: { category: category.slug } }"
       :aria-current="activeCategory === category.slug ? 'page' : undefined"
     >
-      {{ category.name }}
+      <CategoryLabel :name="category.name" />
     </NuxtLink>
   </nav>
 </template>

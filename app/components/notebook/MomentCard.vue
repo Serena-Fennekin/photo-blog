@@ -34,7 +34,7 @@ onBeforeUnmount(() => { disposed = true; clearTimeout(timer); observer?.disconne
     <h3 v-if="post.title">{{ post.title }}</h3>
     <p v-if="post.body" class="moment-body">{{ post.body }}</p>
     <div v-if="post.images.length" class="moment-images" :class="{ 'moment-images--single': post.images.length === 1 }">
-      <button v-for="(asset, index) in post.images" :key="asset.id" type="button" :aria-label="`查看第${index + 1}张图片`" @click="emit('images', post, index)"><img :src="asset.image.src" :srcset="asset.image.srcset" :width="asset.image.width" :height="asset.image.height" :alt="post.title ? `${post.title} · 配图${index + 1}` : `动态配图${index + 1}`" loading="lazy" sizes="(max-width: 720px) 85vw, 680px"></button>
+      <button v-for="(asset, index) in post.images" :key="asset.id" type="button" :aria-label="`查看第${index + 1}张图片`" @click="emit('images', post, index)"><UiProgressiveImage :src="asset.image.src" :srcset="asset.image.srcset" :width="asset.image.width" :height="asset.image.height" :alt="post.title ? `${post.title} · 配图${index + 1}` : `动态配图${index + 1}`" loading="lazy" sizes="(max-width: 720px) 85vw, 680px"/></button>
     </div>
     <footer class="moment-meta"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span data-post-views>{{ total }} 次浏览</span></footer>
   </article>

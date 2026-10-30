@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import GalleryCard from './GalleryCard.vue'
+import EmptyState from '../ui/EmptyState.vue'
 
 import type { GalleryPhoto } from '~/types/content'
 
@@ -19,8 +20,5 @@ const emit = defineEmits<{ select: [photoId: string] }>()
       @select="emit('select', $event)"
     />
   </div>
-  <div v-else class="gallery-empty" role="status">
-    <p>暂时没有照片。</p>
-    <p>换一个分类看看，或者过些时候再来。</p>
-  </div>
+  <EmptyState v-else class="gallery-empty" art="photos" title="暂时没有照片。" description="换一个分类看看，或者过些时候再来。"><NuxtLink to="/gallery" class="admin-secondary">查看全部照片</NuxtLink></EmptyState>
 </template>

@@ -2,13 +2,13 @@
 import type { AdminCategory, AdminPhoto } from '../../../../shared/types/admin'
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 const id = String(useRoute().params.id), request = useRequestFetch()
-const { data: record } = await useAsyncData('edit-photo-' + id, () => request<AdminPhoto>('/api/admin/photos/' + id))
-if (!record.value) throw createError({ statusCode: 404, statusMessage: '照片不存在' })
-const photo = ref<AdminPhoto>(structuredClone(toRaw(record.value)))
+const { data: record,pending:loadPending,error:loadError,refresh } = await useAsyncData('edit-photo-' + id, () => request<AdminPhoto>('/api/admin/photos/' + id),{lazy:true})
+const photo = ref<AdminPhoto|null>(record.value?structuredClone(toRaw(record.value)):null)
+watch(record,value=>{if(value)photo.value=structuredClone(toRaw(value))})
 const { data: categories } = await useFetch<AdminCategory[]>('/api/admin/categories')
 const busy = ref(false), error = ref(''), message = ref('')
 async function save(status?: 'published' | 'draft') {
-  if (busy.value) return
+  if (busy.value||loadPending.value||loadError.value||!photo.value) return
   busy.value = true; error.value = ''; message.value = ''
   try {
     const current = photo.value
@@ -25,6 +25,9 @@ useAdminFeedback(message,error)
 <template>
   <section>
     <NuxtLink class="admin-back" to="/admin">← 所有照片</NuxtLink>
+    <UiSkeleton v-if="loadPending" variant="form" label="正在加载照片信息" :count="2"/>
+    <UiEmptyState v-else-if="loadError||!photo" art="error" title="这张照片暂未加载。" description="重新加载试试，或返回照片列表查看。"><button class="admin-secondary" @click="refresh()">重新加载照片信息</button></UiEmptyState>
+    <template v-else>
     <div class="admin-heading"><div><p class="admin-kicker">{{ photo.status === 'published' ? '已发布的照片' : '照片草稿' }}</p><h1>编辑照片</h1></div><div class="admin-row-actions"><button class="admin-secondary" :disabled="busy" @click="save()">保存照片</button><button v-if="photo.status === 'published'" class="admin-secondary" :disabled="busy" @click="save('draft')">撤回照片</button><button v-else class="admin-primary" :disabled="busy || photo.processingStatus !== 'ready'" @click="save('published')">发布照片</button></div></div>
     <p v-if="error" role="alert" class="admin-error">{{ error }}</p>
     <div class="admin-single-photo">
@@ -35,8 +38,9 @@ useAdminFeedback(message,error)
         <label>简短随笔<textarea v-model="photo.note" rows="4" maxlength="1500" placeholder="只为这张照片写几句话，也可以留白。" /></label>
         <label>照片说明<input v-model="photo.caption" maxlength="300"></label>
         <label v-if="photo.image">替代文本<input v-model="photo.image.alt" maxlength="300"></label>
-        <fieldset><legend>分类</legend><label v-for="category in categories?.filter(item => item.active)" :key="category.slug" class="admin-check"><input v-model="photo.categorySlugs" type="checkbox" :value="category.slug">{{ category.name }}</label></fieldset>
+        <fieldset><legend>分类</legend><label v-for="category in categories?.filter(item => item.active)" :key="category.slug" class="admin-check"><input v-model="photo.categorySlugs" type="checkbox" :value="category.slug"><UiCategoryLabel :name="category.name"/></label></fieldset>
       </fieldset>
     </div>
+    </template>
   </section>
 </template>

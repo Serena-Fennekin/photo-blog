@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import type { GalleryPhoto } from '~/types/content'
 import { gridSrcset } from '~/utils/gallery'
+import ProgressiveImage from '../ui/ProgressiveImage.vue'
 
 const props = withDefaults(defineProps<{ photo: GalleryPhoto; interactive?: boolean }>(), {
   interactive: true
@@ -22,7 +23,7 @@ const cardSrcset = computed(() => gridSrcset(props.photo.image.srcset))
     :aria-label="`查看照片：${photo.image.alt}`"
     @click="emit('select', photo.id)"
   >
-    <img
+    <ProgressiveImage
       :src="photo.image.src"
       :srcset="cardSrcset"
       sizes="(max-width: 680px) 94vw, (max-width: 1100px) 48vw, 32vw"
@@ -30,7 +31,7 @@ const cardSrcset = computed(() => gridSrcset(props.photo.image.srcset))
       :height="photo.image.height"
       :alt="photo.image.alt"
       loading="lazy"
-    >
+    />
     <span class="gallery-card__caption">
       <span>{{ photo.title || photo.caption || photo.image.alt }}</span>
       <span>{{ photo.viewCount }} 次查看<span v-if="photo.exif.camera"> · {{ photo.exif.camera }}</span></span>

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import type { AdminCategory, AdminPhoto, BulkPhotoResult } from '../../../shared/types/admin'
+import {categoryPresentation} from '~/utils/category-presentation'
 definePageMeta({ layout: 'admin', middleware: 'admin' })
-const { data: photos, refresh } = await useFetch<AdminPhoto[]>('/api/admin/photos')
+const { data: photos, pending:loadPending,error:loadError, refresh } = await useFetch<AdminPhoto[]>('/api/admin/photos',{lazy:true})
 const { data: categories } = await useFetch<AdminCategory[]>('/api/admin/categories')
 const selected = ref<string[]>([]), busy = ref(false), uploading = ref(false), error = ref(''), message = ref(''), bulkCategory = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const library = ref<HTMLFieldSetElement | null>(null)
 const uploads = ref<{ file: File; state: string; progress: number; error?: string; existingPhoto?: Pick<AdminPhoto, 'id' | 'title' | 'status'> }[]>([])
 const dragId = ref<string | null>(null)
-onMounted(() => { void refresh() })
+onMounted(() => { if(!loadPending.value)void refresh() })
 const selectable = computed(() => photos.value?.filter(photo => photo.processingStatus === 'ready').map(photo => photo.id) ?? [])
 const allSelected = computed(() => selectable.value.length > 0 && selectable.value.every(id => selected.value.includes(id)))
 function selectAll() { selected.value = allSelected.value ? [] : [...selectable.value] }
@@ -110,16 +111,18 @@ useAdminFeedback(message,error)
       <input id="batch-photos" ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple :disabled="uploading || busy" @change="uploadFiles(Array.from(($event.target as HTMLInputElement).files || []))">
     </label>
     <ul v-if="uploads.length" class="admin-upload-list"><li v-for="(item,index) in uploads" :key="index"><span>{{ item.file.name }}</span><span>{{ item.state }} {{ item.progress ? item.progress + '%' : '' }}</span><small v-if="item.error">{{ item.error }}</small><NuxtLink v-if="item.existingPhoto" :to="'/admin/photos/' + item.existingPhoto.id">查看已有照片：{{ item.existingPhoto.title }}（{{ item.existingPhoto.status === 'published' ? '已发布' : '草稿' }}）</NuxtLink><button v-if="item.state === '失败' && !uploading" class="admin-quiet" :disabled="busy" @click="uploadFiles([item.file])">重新上传</button></li></ul>
-    <fieldset class="admin-library-controls" :disabled="busy || uploading">
+    <fieldset class="admin-library-controls" :disabled="busy || uploading || loadPending || Boolean(loadError)">
       <label class="admin-check"><input type="checkbox" :checked="allSelected" @change="selectAll">全选可用照片</label><span class="admin-meta">已选 {{ selected.length }} 张</span>
       <button class="admin-primary" :disabled="!selected.length" @click="apply({ status: 'published' })">发布所选</button><button class="admin-secondary" :disabled="!selected.length" @click="apply({ status: 'draft' })">撤回所选</button>
-      <label class="admin-bulk-category">统一分类<select v-model="bulkCategory"><option value="">选择分类</option><option v-for="category in categories?.filter(item => item.active)" :key="category.slug" :value="category.slug">{{ category.name }}</option></select></label>
+      <label class="admin-bulk-category">统一分类<select v-model="bulkCategory"><option value="">选择分类</option><option v-for="category in categories?.filter(item => item.active)" :key="category.slug" :value="category.slug">{{ categoryPresentation(category.name).text }}</option></select></label>
       <button class="admin-secondary" :disabled="!selected.length || !bulkCategory" @click="apply({ categorySlugs: [bulkCategory] })">应用所选分类</button><button class="admin-quiet" :disabled="!selected.length" @click="apply({ status: 'deleted' })">移除所选</button>
     </fieldset>
     <p id="photo-sort-help" class="admin-meta">拖动卡片调整整个摄影集的顺序，松开后自动保存。<span class="admin-sort-instructions">也可以聚焦卡片后，按向上或向下方向键调整前后顺序。</span></p>
-    <fieldset ref="library" class="admin-photo-grid admin-photo-library" :disabled="busy || uploading" :aria-busy="busy || uploading">
-      <article v-for="(photo,index) in photos" :key="photo.id" class="admin-photo-card" :data-selected="selected.includes(photo.id)" :data-admin-photo-id="photo.id" tabindex="0" :aria-labelledby="'admin-photo-title-' + photo.id" aria-describedby="photo-sort-help" :draggable="!busy && !uploading" @keydown="moveFromKeyboard($event,index)" @dragstart="dragId=photo.id" @dragend="dragId=null" @dragover.prevent @drop.prevent="drop(index)">
-        <img v-if="photo.image" :src="photo.image.src" :alt="photo.image.alt" loading="lazy" draggable="false">
+    <UiSkeleton v-if="loadPending&&!photos" variant="gallery" label="正在加载照片档案" :count="6"/>
+    <UiEmptyState v-else-if="loadError" art="error" title="照片档案暂未加载。" description="照片仍然保留着，重新连接后即可继续整理。"><button class="admin-secondary" @click="refresh()">重新加载照片档案</button></UiEmptyState>
+    <fieldset v-else ref="library" class="admin-photo-grid admin-photo-library" :disabled="busy || uploading" :aria-busy="busy || uploading">
+      <article v-for="(photo,index) in photos" :key="photo.id" class="admin-photo-card" :data-selected="selected.includes(photo.id)" :data-dragging="dragId===photo.id" :data-admin-photo-id="photo.id" tabindex="0" :aria-labelledby="'admin-photo-title-' + photo.id" aria-describedby="photo-sort-help" :draggable="!busy && !uploading" @keydown="moveFromKeyboard($event,index)" @dragstart="dragId=photo.id" @dragend="dragId=null" @dragover.prevent @drop.prevent="drop(index)">
+        <UiProgressiveImage v-if="photo.image" :src="photo.image.src" :alt="photo.image.alt" :width="photo.image.width" :height="photo.image.height"/>
         <div v-else class="admin-photo-failed">{{ photo.error || '图片处理失败' }}<button class="admin-secondary" @click="retry(photo.id)">重试处理</button></div>
         <div class="admin-photo-fields">
           <label class="admin-check"><input v-model="selected" type="checkbox" :value="photo.id" :disabled="photo.processingStatus !== 'ready'" :aria-label="'选择照片：' + (photo.title || photo.id)"><span class="admin-selection-label">{{ selected.includes(photo.id) ? '已选择' : '选择' }}</span><span class="admin-photo-status" :data-status="photo.status">{{ photo.status === 'published' ? '已发布' : '草稿' }}</span></label>
@@ -128,6 +131,6 @@ useAdminFeedback(message,error)
         </div>
       </article>
     </fieldset>
-    <p v-if="!photos?.length" class="admin-empty">这里还很安静。直接选择照片，开始第一次上传。</p>
+    <UiEmptyState v-if="!loadPending&&!loadError&&!photos?.length" class="admin-empty" art="photos" title="从第一张照片开始。" description="一次选择多张照片，上传后就能慢慢整理。"><button type="button" class="admin-primary" @click="fileInput?.click()"><UiIcon name="upload"/>选择照片</button></UiEmptyState>
   </section>
 </template>
