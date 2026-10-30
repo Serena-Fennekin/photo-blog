@@ -28,9 +28,10 @@ onMounted(() => {
       :data-theme-choice="choice"
       :aria-pressed="preference === choice"
       :aria-label="labels[choice]"
+      :title="labels[choice]"
       @click="setPreference(choice)"
     >
-      {{ labels[choice] }}
+      <UiIcon :name="choice==='system'?'monitor':choice==='dark'?'moon':'sun'"/><span class="theme-selector__label">{{ labels[choice] }}</span>
     </button>
   </div>
 </template>

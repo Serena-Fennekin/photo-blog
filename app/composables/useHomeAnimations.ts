@@ -38,8 +38,8 @@ export const useHomeAnimations = (root: Ref<HTMLElement | null>): void => {
           }
         })
           .from(galleryInvitation.querySelector('[data-home-motion="gallery-mark"]'), { opacity: 0, y: lift, rotate: narrow ? -2 : -4, duration: 1.5 }, 0)
-          .from(galleryInvitation.querySelectorAll('[data-home-motion="gallery-character"]'), { opacity: 0, yPercent: 115, duration: 1.55, stagger: { amount: .95 } }, .22)
-          .from(galleryInvitation.querySelectorAll('[data-home-motion="gallery-copy"]'), { opacity: 0, y: 12, duration: 1.2, stagger: .18 }, 1.55)
+          .from(galleryInvitation.querySelectorAll('[data-home-motion="gallery-character"]'), { opacity: 0, yPercent: 115, duration: 1.95, stagger: { amount: 1.15 } }, .22)
+          .from(galleryInvitation.querySelectorAll('[data-home-motion="gallery-copy"]'), { opacity: 0, y: 10, duration: 1.4, stagger: .2 }, 1.85)
       }
 
     }, root.value)
