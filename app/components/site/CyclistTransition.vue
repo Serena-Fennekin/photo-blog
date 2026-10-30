@@ -69,6 +69,7 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 .cycling-ambient { position:absolute; inset:0; width:100%; height:100%; opacity:.85; pointer-events:none; }
 .cycling-source-content { position:relative; width:100%; transform-origin:top left; }
 .cycling-source-content * { animation:none!important; transition:none!important; }
+.cycling-source-content .site-header { visibility:hidden; }
 .cycling-rider { position:absolute; top:50%; left:0; width:clamp(290px,30vw,440px); aspect-ratio:2; color:#111916; transform:translate3d(120vw,-55%,0); will-change:transform; }
 .cycling-rider svg { width:100%; height:100%; overflow:visible; display:block; }
 .cycling-rider .wheel { transform-box:view-box; }

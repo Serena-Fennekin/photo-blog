@@ -22,12 +22,12 @@ void main(){
    previous=d;
  }
  float alpha=u_shift<.000001?1.:smoothstep(-aa,aa,outer);
- gl_FragColor=vec4(mix(color,color*.75,seam*.22),alpha);
+ gl_FragColor=vec4(mix(color,color*.75,seam*.22)*alpha,alpha);
 }`
 const rgb = (hex:string) => [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255)
 
 function gpu(canvas:HTMLCanvasElement):Backend|undefined {
-  const gl=canvas.getContext('webgl',{alpha:true,antialias:false,depth:false,stencil:false,premultipliedAlpha:false})
+  const gl=canvas.getContext('webgl',{alpha:true,antialias:false,depth:false,stencil:false,premultipliedAlpha:true})
   if(!gl) return
   const shaders:WebGLShader[]=[], program=gl.createProgram(), buffer=gl.createBuffer()
   let lost=false
