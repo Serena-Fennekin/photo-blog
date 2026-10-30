@@ -22,12 +22,25 @@ const normalizePreference = (value: string | null): ThemePreference =>
 export const createThemePreferenceController = ({ storage, mediaQuery, root }: ThemeControllerOptions) => {
   const preference = ref<ThemePreference>('system')
   const systemTheme = ref<ResolvedTheme>(mediaQuery.matches ? 'dark' : 'light')
+  let started = false
   const resolvedTheme = computed<ResolvedTheme>(() =>
     preference.value === 'system' ? systemTheme.value : preference.value
   )
 
   const apply = () => {
     root.dataset.theme = resolvedTheme.value
+    root.dataset.themePreference = preference.value
+  }
+
+  // A suspended tab can miss change events; sample the current query on resume.
+  const refreshSystem = () => {
+    systemTheme.value = mediaQuery.matches ? 'dark' : 'light'
+    apply()
+  }
+
+  const reloadPreference = () => {
+    try { preference.value = normalizePreference(storage.getItem(THEME_STORAGE_KEY)) } catch { /* Preserve the session's choice if storage is denied. */ }
+    refreshSystem()
   }
 
   const handleSystemChange = (event: Pick<MediaQueryListEvent, 'matches'>) => {
@@ -37,20 +50,20 @@ export const createThemePreferenceController = ({ storage, mediaQuery, root }: T
 
   const setPreference = (next: ThemePreference) => {
     preference.value = next
-    storage.setItem(THEME_STORAGE_KEY, next)
-    apply()
+    try { storage.setItem(THEME_STORAGE_KEY, next) } catch { /* The choice still works for this session. */ }
+    refreshSystem()
   }
 
   const start = () => {
-    preference.value = normalizePreference(storage.getItem(THEME_STORAGE_KEY))
-    systemTheme.value = mediaQuery.matches ? 'dark' : 'light'
+    if (started) return
+    started = true
+    reloadPreference()
     mediaQuery.addEventListener('change', handleSystemChange)
-    apply()
   }
 
-  const stop = () => mediaQuery.removeEventListener('change', handleSystemChange)
+  const stop = () => { started = false; mediaQuery.removeEventListener('change', handleSystemChange) }
 
-  return { preference, resolvedTheme, setPreference, start, stop }
+  return { preference, resolvedTheme, setPreference, refreshSystem, reloadPreference, start, stop }
 }
 
 export const useThemePreference = (): {
@@ -62,26 +75,40 @@ export const useThemePreference = (): {
   const resolvedTheme = ref<ResolvedTheme>('light')
   let controller: ReturnType<typeof createThemePreferenceController> | undefined
   let stopSync: (() => void) | undefined
+  let stopResume: (() => void) | undefined
 
   onMounted(() => {
     controller = createThemePreferenceController({
-      storage: window.localStorage,
+      storage: { getItem: key => window.localStorage.getItem(key), setItem: (key, value) => window.localStorage.setItem(key, value) },
       mediaQuery: window.matchMedia('(prefers-color-scheme: dark)'),
       root: document.documentElement
     })
     controller.start()
+    const refresh = () => { if (document.visibilityState !== 'hidden') controller?.refreshSystem() }
+    const syncStorage = (event: StorageEvent) => { if (event.key === THEME_STORAGE_KEY || event.key === null) controller?.reloadPreference() }
+    window.addEventListener('focus', refresh)
+    window.addEventListener('pageshow', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('storage', syncStorage)
+    stopResume = () => {
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('pageshow', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('storage', syncStorage)
+    }
     stopSync = watch(
       [controller.preference, controller.resolvedTheme],
       ([nextPreference, nextResolvedTheme]) => {
         preference.value = nextPreference
         resolvedTheme.value = nextResolvedTheme
       },
-      { immediate: true }
+      { immediate: true, flush: 'sync' }
     )
   })
 
   onBeforeUnmount(() => {
     stopSync?.()
+    stopResume?.()
     controller?.stop()
   })
 

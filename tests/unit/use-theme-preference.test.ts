@@ -82,4 +82,24 @@ describe('theme preference controller', () => {
     mediaQuery.emit(true)
     expect(controller.resolvedTheme.value).toBe('dark')
   })
+  it('samples the current OS preference when system is selected after a missed change event',()=>{
+    const mediaQuery=new FakeMediaQuery(),root={dataset:{} as Record<string,string>}
+    const controller=createThemePreferenceController({storage:new MemoryStorage(),mediaQuery,root})
+    controller.start();controller.setPreference('light')
+    mediaQuery.matches=true // e.g. a suspended tab missed the notification.
+    controller.setPreference('system')
+    expect(root.dataset.theme).toBe('dark')
+  })
+  it('still follows the OS and allows an explicit choice if storage access is denied',()=>{
+    const mediaQuery=new FakeMediaQuery(),root={dataset:{} as Record<string,string>}
+    mediaQuery.matches=true
+    const storage={getItem(){throw new Error('denied')},setItem(){throw new Error('denied')}}
+    const controller=createThemePreferenceController({storage,mediaQuery,root})
+    expect(()=>controller.start()).not.toThrow()
+    expect(root.dataset.theme).toBe('dark')
+    expect(()=>controller.setPreference('light')).not.toThrow()
+    expect(root.dataset.theme).toBe('light')
+    mediaQuery.emit(true);expect(root.dataset.theme).toBe('light')
+    controller.stop()
+  })
 })
