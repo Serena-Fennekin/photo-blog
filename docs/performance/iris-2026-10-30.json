@@ -1,0 +1,443 @@
+{
+  "mode": "warmed headless Chrome",
+  "deviceScaleFactor": 1,
+  "metric": "requestAnimationFrame interval in milliseconds; not display presentation FPS",
+  "beforeRevision": "64e5e6f9578a50fffea9d4f786f53f7bd858c86f",
+  "afterRevision": "5045c18e25381aed48aa2e5228cdb5c4032c644c",
+  "before": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "normal",
+      "run": 0,
+      "frames": 29,
+      "mean": 37.32,
+      "p95": 59,
+      "max": 64.6,
+      "metrics": {
+        "LayoutDuration": 3.9,
+        "RecalcStyleDuration": 9.8,
+        "ScriptDuration": 20.5,
+        "TaskDuration": 77.9
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "normal",
+      "run": 1,
+      "frames": 29,
+      "mean": 37.94,
+      "p95": 70.7,
+      "max": 76.4,
+      "metrics": {
+        "LayoutDuration": 4.9,
+        "RecalcStyleDuration": 11.8,
+        "ScriptDuration": 20.5,
+        "TaskDuration": 88.1
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-iris",
+      "run": 0,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.2,
+      "metrics": {
+        "LayoutDuration": 10.8,
+        "RecalcStyleDuration": 53,
+        "ScriptDuration": 33.5,
+        "TaskDuration": 242.4
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-iris",
+      "run": 1,
+      "frames": 188,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.3,
+      "metrics": {
+        "LayoutDuration": 9.9,
+        "RecalcStyleDuration": 51.3,
+        "ScriptDuration": 32.1,
+        "TaskDuration": 230.4
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-ambient",
+      "run": 0,
+      "frames": 35,
+      "mean": 31.11,
+      "p95": 64.8,
+      "max": 70.5,
+      "metrics": {
+        "LayoutDuration": 3.8,
+        "RecalcStyleDuration": 12.5,
+        "ScriptDuration": 2.5,
+        "TaskDuration": 78.5
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-ambient",
+      "run": 1,
+      "frames": 33,
+      "mean": 33.33,
+      "p95": 58.8,
+      "max": 70.6,
+      "metrics": {
+        "LayoutDuration": 4.9,
+        "RecalcStyleDuration": 12.2,
+        "ScriptDuration": 2.9,
+        "TaskDuration": 66.6
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "normal",
+      "run": 0,
+      "frames": 61,
+      "mean": 18,
+      "p95": 53,
+      "max": 247.1,
+      "metrics": {
+        "LayoutDuration": 5.6,
+        "RecalcStyleDuration": 20.8,
+        "ScriptDuration": 37.5,
+        "TaskDuration": 247.9
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "normal",
+      "run": 1,
+      "frames": 56,
+      "mean": 19.56,
+      "p95": 52.9,
+      "max": 252.9,
+      "metrics": {
+        "LayoutDuration": 5.3,
+        "RecalcStyleDuration": 18,
+        "ScriptDuration": 30.6,
+        "TaskDuration": 373.2
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-iris",
+      "run": 0,
+      "frames": 188,
+      "mean": 5.85,
+      "p95": 6.1,
+      "max": 6.3,
+      "metrics": {
+        "LayoutDuration": 9.2,
+        "RecalcStyleDuration": 48.6,
+        "ScriptDuration": 56.9,
+        "TaskDuration": 247.7
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-iris",
+      "run": 1,
+      "frames": 186,
+      "mean": 5.91,
+      "p95": 6,
+      "max": 11.8,
+      "metrics": {
+        "LayoutDuration": 9,
+        "RecalcStyleDuration": 47.5,
+        "ScriptDuration": 57.1,
+        "TaskDuration": 249.1
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-ambient",
+      "run": 0,
+      "frames": 58,
+      "mean": 18.71,
+      "p95": 64.8,
+      "max": 241.1,
+      "metrics": {
+        "LayoutDuration": 4.5,
+        "RecalcStyleDuration": 17.2,
+        "ScriptDuration": 4.3,
+        "TaskDuration": 216.3
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-ambient",
+      "run": 1,
+      "frames": 53,
+      "mean": 20.75,
+      "p95": 70.2,
+      "max": 241.2,
+      "metrics": {
+        "LayoutDuration": 5,
+        "RecalcStyleDuration": 17.5,
+        "ScriptDuration": 3.8,
+        "TaskDuration": 195.9
+      }
+    }
+  ],
+  "after": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "normal",
+      "run": 0,
+      "frames": 188,
+      "mean": 5.87,
+      "p95": 6,
+      "max": 6.1,
+      "metrics": {
+        "LayoutDuration": 2.8,
+        "RecalcStyleDuration": 1.7,
+        "ScriptDuration": 50.7,
+        "TaskDuration": 126
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "normal",
+      "run": 1,
+      "frames": 188,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.2,
+      "metrics": {
+        "LayoutDuration": 3.5,
+        "RecalcStyleDuration": 2,
+        "ScriptDuration": 54,
+        "TaskDuration": 136.1
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-iris",
+      "run": 0,
+      "frames": 187,
+      "mean": 5.91,
+      "p95": 6,
+      "max": 11.8,
+      "metrics": {
+        "LayoutDuration": 4.1,
+        "RecalcStyleDuration": 2.1,
+        "ScriptDuration": 42.7,
+        "TaskDuration": 110.7
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-iris",
+      "run": 1,
+      "frames": 188,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.2,
+      "metrics": {
+        "LayoutDuration": 2.7,
+        "RecalcStyleDuration": 1.6,
+        "ScriptDuration": 41.5,
+        "TaskDuration": 100.5
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-ambient",
+      "run": 0,
+      "frames": 188,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.3,
+      "metrics": {
+        "LayoutDuration": 2.3,
+        "RecalcStyleDuration": 1.4,
+        "ScriptDuration": 17.7,
+        "TaskDuration": 88.3
+      }
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "scenario": "without-ambient",
+      "run": 1,
+      "frames": 188,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.1,
+      "metrics": {
+        "LayoutDuration": 2.6,
+        "RecalcStyleDuration": 1.7,
+        "ScriptDuration": 17.2,
+        "TaskDuration": 84.5
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "normal",
+      "run": 0,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.2,
+      "metrics": {
+        "LayoutDuration": 2.8,
+        "RecalcStyleDuration": 1.6,
+        "ScriptDuration": 75.9,
+        "TaskDuration": 155.3
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "normal",
+      "run": 1,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.1,
+      "metrics": {
+        "LayoutDuration": 2.9,
+        "RecalcStyleDuration": 1.8,
+        "ScriptDuration": 75.6,
+        "TaskDuration": 150.1
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-iris",
+      "run": 0,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.6,
+      "metrics": {
+        "LayoutDuration": 3,
+        "RecalcStyleDuration": 1.7,
+        "ScriptDuration": 68.3,
+        "TaskDuration": 138.5
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-iris",
+      "run": 1,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.5,
+      "metrics": {
+        "LayoutDuration": 2.1,
+        "RecalcStyleDuration": 1.5,
+        "ScriptDuration": 65.9,
+        "TaskDuration": 125.3
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-ambient",
+      "run": 0,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6,
+      "max": 6.2,
+      "metrics": {
+        "LayoutDuration": 2.4,
+        "RecalcStyleDuration": 1.7,
+        "ScriptDuration": 17.9,
+        "TaskDuration": 98.2
+      }
+    },
+    {
+      "viewport": {
+        "width": 3840,
+        "height": 2160
+      },
+      "scenario": "without-ambient",
+      "run": 1,
+      "frames": 187,
+      "mean": 5.88,
+      "p95": 6.1,
+      "max": 6.3,
+      "metrics": {
+        "LayoutDuration": 2.9,
+        "RecalcStyleDuration": 1.7,
+        "ScriptDuration": 17.4,
+        "TaskDuration": 88
+      }
+    }
+  ]
+}

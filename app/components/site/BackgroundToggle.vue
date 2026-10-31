@@ -1,0 +1,2 @@
+<script setup lang="ts">const { enabled, toggle } = useAmbientPreference()</script>
+<template><button class="ambient-toggle" type="button" aria-label="背景特效" :aria-pressed="enabled" :title="enabled ? '关闭背景特效' : '开启背景特效'" @click="toggle"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z"/></svg><span>特效{{ enabled ? '开' : '关' }}</span></button></template>

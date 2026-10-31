@@ -1,0 +1,61 @@
+<svg viewBox="0 0 480 240" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="jerseyGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cf7048"/><stop offset="1" stop-color="#8d3d29"/></linearGradient>
+              <linearGradient id="framePaint" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#d3d8d1"/><stop offset=".45" stop-color="#bec6bf"/><stop offset="1" stop-color="#a3afa7"/></linearGradient>
+              <linearGradient id="helmetWhite" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5f6f2"/><stop offset="1" stop-color="#cfd5cf"/></linearGradient>
+            </defs>
+            <g class="wheel wheel-front" fill="none" stroke="currentColor">
+              <circle cx="118" cy="176" r="56" stroke-width="8"/><circle cx="118" cy="176" r="4" fill="currentColor"/>
+              <path d="M118 120v112M62 176h112M78 136l80 80M78 216l80-80" stroke-width="1.4" opacity=".46"/>
+            </g>
+            <g class="wheel wheel-rear" fill="none" stroke="currentColor">
+              <circle cx="338" cy="176" r="56" stroke-width="8"/><circle cx="338" cy="176" r="4" fill="currentColor"/>
+              <path d="M338 120v112M282 176h112M298 136l80 80M298 216l80-80" stroke-width="1.4" opacity=".46"/>
+            </g>
+            <g class="bike-frame" fill="none" stroke="url(#framePaint)" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M338 176L276 96L232 176Z M276 96L168 103L232 176 M118 176L168 103" stroke-width="7"/>
+              <path d="M276 96L287 90M168 103l-7-19M160 84h-18c-9 0-13 6-10 13" stroke-width="6"/>
+              <path d="M168 103l-50 73M161 100l-43 76" stroke-width="5"/>
+              <path d="M232 176L338 176" stroke-width="3" opacity=".66"/>
+              <path class="frame-highlight" d="M176 102L268 96M169 104L187 125M279 100L327 162" stroke="#e0e4df" stroke-width="1.4" opacity=".65"/>
+              <path class="frame-graphics" d="M184 119L191 127M195 132L202 140M206 145L213 153" stroke="#414c55" stroke-width="7.5" stroke-linecap="butt"/>
+              <path class="frame-detail" d="M244 99L256 98" stroke="#627768" stroke-width="3" stroke-linecap="butt"/>
+            </g>
+            <path class="saddle" d="M279 86Q289 84 300 86L302 89Q289 92 280 90Z" fill="#111916" stroke="#56635a" stroke-width="1"/>
+            <g class="rider rider--far" opacity="1">
+              <g class="rider-upper rider-upper--far">
+                <path d="M272 78Q255 102 251 121" fill="none" stroke="#1a2420" stroke-width="18" stroke-linecap="round"/>
+                <g class="rider-lower rider-lower--far">
+                  <path d="M251 121Q228 146 206 173" fill="none" stroke="#c77f58" stroke-width="12" stroke-linecap="round"/>
+                  <path d="M199 169l25 3" fill="none" stroke="#f0e8d9" stroke-width="8" stroke-linecap="round"/>
+                </g>
+              </g>
+            </g>
+            <g class="crank" fill="none" stroke="#515a55" stroke-linecap="round">
+              <circle cx="232" cy="176" r="12" stroke-width="5"/><path d="M232 176l29 8M232 176l-29-8" stroke-width="5"/>
+            </g>
+            <g class="rider rider--body">
+              <path d="M282 67C272 47 256 34 237 29L216 57C233 71 251 79 273 82Z" fill="url(#jerseyGradient)"/>
+              <path d="M250 43l20 31M236 35l-14 25" fill="none" stroke="rgba(255,238,220,.72)" stroke-width="2"/>
+              <path class="rider-pelvis" d="M264 66Q276 62 286 69L288 76Q285 82 277 82L265 78Z" fill="#18221e"/>
+              <path class="rider-arm" d="M235 35Q207 50 174 81" fill="none" stroke="#d38b64" stroke-width="14" stroke-linecap="round"/>
+              <path class="rider-arm" d="M245 42Q214 63 174 86" fill="none" stroke="#d38b64" stroke-width="12" stroke-linecap="round"/>
+              <path d="M171 75l-18 6 8 13 20-9zM169 82l-16 10" fill="#111916" stroke="#111916" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M222 22L238 28L237 40L224 35Z" fill="#bf724d"/>
+              <path d="M203 15Q218 7 232 18L232 27L222 37L208 34L203 27L197 25L202 21Z" fill="#d38b64"/>
+              <path d="M227 15l5 5-1 8-5-4z" fill="#28342d"/>
+              <path d="M207 31L219 33L225 29L222 37L209 35Z" fill="#705447" opacity=".6"/>
+              <path class="helmet-shell" d="M197 20C199-1 226-7 245 8L243 20Q219 9 197 20Z" fill="url(#helmetWhite)"/>
+              <path class="helmet-vents" d="M200 15Q221 1 240 11M208 8l3 9M221 4l1 11M234 7l-2 9" fill="none" stroke="#8a958c" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M199 19L218 17L219 24L201 26Z" fill="#12241e"/>
+              <path d="M218 19l12 3M222 25l-5 11" fill="none" stroke="#14201c" stroke-width="2.5" stroke-linecap="round"/>
+              <g class="rider-upper rider-upper--near">
+                <path d="M276 80Q262 105 254 130" fill="none" stroke="#18221e" stroke-width="20" stroke-linecap="round"/>
+                <g class="rider-lower rider-lower--near">
+                  <path d="M254 130Q257 155 261 183" fill="none" stroke="#d38b64" stroke-width="13" stroke-linecap="round"/>
+                  <path d="M255 180l27 7" fill="none" stroke="#f0e8d9" stroke-width="9" stroke-linecap="round"/>
+                </g>
+              </g>
+              <path d="M217 57Q239 71 259 77" fill="none" stroke="rgba(240,232,217,.32)" stroke-width="2"/>
+            </g>
+          </svg>

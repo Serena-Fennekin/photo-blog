@@ -1,0 +1,15 @@
+# Breathing type, glass surfaces and a living pond
+
+The seven requested refinements extend the current water-grey photography journal and forest-night theme. The request authorizes implementation using the established Native workflow. Keep photographs, saved copy, author identity, privacy, view counting and approved navigation transitions working.
+
+Use the existing Vue/CSS/Canvas stack. A component framework adds unnecessary weight; a full-screen animated refraction shader would repeat the earlier large-screen animation cost. Instead use bounded frosted surfaces, optical edge highlights that respond to hover/focus, and a subtle SVG backdrop displacement on compact controls with a blur-only fallback. Large cards use lighter frosting and no continuously animated blur. Keep the photos themselves optically clear. Colours remain water #e5eeeb, surface #f1f6f3, ink #203b35, muted #526d66, accent #875f73; retain existing dark counterparts. Existing serif display type and readable sans controls remain.
+
+Homepage: slower staggered glyph entrance, generous fixed leading/tracking, followed by an eight-second, low-amplitude opacity/vertical breathing cycle. Animate transform/opacity rather than font metrics to avoid line wrapping or navigation jitter. Reduced motion stays readable and static.
+
+Information cards: one logical subject per panel, soft corners with hierarchy, lift by about3px and deepen shadow on capable pointing devices. Avoid movement during photo dragging and preserve keyboard focus. Loading states reflect real fetch/image readiness, reserve space, distinguish errors from empty lists, and disappear without artificial delay. Empty states use small authored SVG illustrations and a useful action. Lazy client-side list fetching lets the skeleton actually render while data is pending; server rendering remains populated. Do not overwrite saved editor fields while loading or after a failure. Protect category pagination from stale in-flight responses.
+
+Keep user-authored prose/emoji intact. Category chrome replaces pictographic graphemes with matching inline SVG icons; native selects show the plain category name. Theme selectors use monitor/moon/sun SVGs rather than cryptic short letters on mobile.
+
+Pond: cache detailed leaf/lotus/pavilion art, add segmented translucent freshwater shrimp with antennae/legs and smooth bounded trajectories, refine egret S-neck, plumage, joints, feet, bill and water reflection, and deepen leaf veins/rolled edges/dewdrops around a deliberate curved notch. Keep central reading space quiet. Respect the existing2.5M-pixel canvas budget, mobile density, hidden-tab/modal/off switches and reduced motion. No per-frame sprite allocation or additional full-screen simulation.
+
+Validate slow/failed/empty fetches, delayed/cached/failed images, theme and reduced motion, large/mobile layouts, pagination races, and existing publishing/privacy/transition suites. Inspect artwork enlarged and in the real layout. All mutations use isolated test data. Sync the authorized development branch to GitHub and retain the main local preview.
